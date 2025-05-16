@@ -1,0 +1,7 @@
+dataset_reduced
+enron5
+MultinomialNB_Email_original.cpp
+.vscode/
+.vs
+debug
+*.vcxproj*
