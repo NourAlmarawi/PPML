@@ -560,16 +560,40 @@ void MultinomialNB_Email::train(long long int &timeElapsed)
 void MultinomialNB_Email::getTVaccordingToSelectedFeatures(vector<string> selectedFeatures,
 	vector<int64_t> &trainingVector)
 {
+	// std::cout << "selectedFeatures.size()=" << selectedFeatures.size() << endl;
+	// std::cout << "trainingVector.size()=" << trainingVector.size() << endl;
+	// std::cout << "wordsGlobalVector.size()=" << wordsGlobalVector.size() << endl;
+	// std::cout << "hamWordsFreq.size()=" << hamWordsFreq.size() << endl;
+	// std::cout << "spamWordsFreq.size()=" << spamWordsFreq.size() << endl <<endl;
+	// cout << "Selected Features Output:" << endl;
+	// for (const auto &feature : selectedFeatures) cout << feature << " "; cout << endl;
+	// cout << "Words Global Vector Output:" << endl;
+	// for (const auto &feature : wordsGlobalVector) cout << feature << " "; cout << endl;
+	// cout << "Ham Words Freq Output:" << endl;
+	// for (const auto &feature : hamWordsFreq) cout << feature << " "; cout << endl;
+	// cout << "Spam Words Freq Output:" << endl;	
+	// for (const auto &feature : spamWordsFreq) cout << feature << " "; cout << endl;
+	// cout << "trainingVector Output:" << endl;
+	// for (const auto &feature : trainingVector) cout << feature << " "; cout << endl;
+	
+	// cout << "trainingVector.size()=" << trainingVector.size() << endl;
+	//! remove after applying polymodulus
+	int m = selectedFeatures.size();
+	trainingVector.resize(2 * m + 3, 0);
+	// cout << "trainingVector.size() after resize=" << trainingVector.size() << endl;
 	for (int i = 0; i < selectedFeatures.size(); i++)
 	{
+		// cout << "selectedFeatures[" << i << "]=" << selectedFeatures[i] << endl;
 		for (int j = 0; j < wordsGlobalVector.size(); j++)
 		{
 			if (selectedFeatures[i] == wordsGlobalVector[j])
 			{
+				// cout << "selectedFeatures[" << i << "]=" << selectedFeatures[i] << " == wordsGlobalVector[" << j << "]=" << wordsGlobalVector[j] << endl;
 				trainingVector[i + 1] = (int64_t) hamWordsFreq[j];
 				trainingVector[i + 1 + m + 1] = (int64_t)spamWordsFreq[j];
 			}
 		}
+		// cout << "trainingVector[" << i + 1 << "]=" << trainingVector[i + 1] << endl;
 	}
 	trainingVector[0] = hamMails;
 	trainingVector[0 + m + 1] = spamMails;

@@ -5,3 +5,4 @@ MultinomialNB_Email_original.cpp
 .vs
 debug
 *.vcxproj*
+seal
