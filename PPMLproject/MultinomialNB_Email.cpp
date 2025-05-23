@@ -1,8 +1,6 @@
 #include <time.h>                // for time()
 #include "MultinomialNB_Email.h"
 #include <cmath>
-#include <iostream>
-#include <iostream>
 #include <fstream>          // for ifstream
 #include <cctype>           
 #include <string>
@@ -12,6 +10,7 @@
 #include <iostream>
 #include <iomanip>
 #include <experimental/filesystem>
+#include <numeric>
 namespace fs = std::experimental;
 using std::vector;
 using namespace std;
@@ -404,7 +403,8 @@ void MultinomialNB_Email::train(long long int &timeElapsed)
 	int countOfLessThanFive = 0;
 	for (int i = 0; i < wordsGlobalVector.size(); i++)
 	{
-		if ((hamWordsInDocumentsCount[i] + spamWordsInDocumentsCount[i]) >= 5)
+		// if ((hamWordsInDocumentsCount[i] + spamWordsInDocumentsCount[i]) >= 5)
+		if ((hamWordsInDocumentsCount[i] + spamWordsInDocumentsCount[i]) >= 0)
 		{
 			probWordInDoc[i] = ((long double)hamWordsInDocumentsCount[i] + (long double)spamWordsInDocumentsCount[i]); // ((long double)totalNrMails);
 			probWordNOTInDoc[i] = (long double)(totalNrMails - probWordInDoc[i]);
@@ -495,61 +495,61 @@ void MultinomialNB_Email::train(long long int &timeElapsed)
 				  << std::endl;
 	}
 	
-	for (int i = 1; i < m; i++)
-	{
-		for (int j = i + 1; j <= m; j++)
-		{
-			if (selectedFeatures[i] < selectedFeatures[j])
-			{
-				tmpString = selectedFeatures[i];
-				selectedFeatures[i] = selectedFeatures[j];
-				selectedFeatures[j] = tmpString;
+	// for (int i = 1; i < m; i++)
+	// {
+	// 	for (int j = i + 1; j <= m; j++)
+	// 	{
+	// 		if (selectedFeatures[i] < selectedFeatures[j])
+	// 		{
+	// 			tmpString = selectedFeatures[i];
+	// 			selectedFeatures[i] = selectedFeatures[j];
+	// 			selectedFeatures[j] = tmpString;
 
-				tmpDouble = logOfProbWordIsHam[i];
-				logOfProbWordIsHam[i] = logOfProbWordIsHam[j];
-				logOfProbWordIsHam[j] = tmpDouble;
+	// 			tmpDouble = logOfProbWordIsHam[i];
+	// 			logOfProbWordIsHam[i] = logOfProbWordIsHam[j];
+	// 			logOfProbWordIsHam[j] = tmpDouble;
 
-				tmpDouble = logOfProbWordIsSpam[i];
-				logOfProbWordIsSpam[i] = logOfProbWordIsSpam[j];
-				logOfProbWordIsSpam[j] = tmpDouble;
+	// 			tmpDouble = logOfProbWordIsSpam[i];
+	// 			logOfProbWordIsSpam[i] = logOfProbWordIsSpam[j];
+	// 			logOfProbWordIsSpam[j] = tmpDouble;
 
-				// swap all the stuff
-				//wordsGlobalVector
-				tmpString = wordsGlobalVector[i];
-				wordsGlobalVector[i] = wordsGlobalVector[j];
-				wordsGlobalVector[j] = tmpString;
+	// 			// swap all the stuff
+	// 			//wordsGlobalVector
+	// 			tmpString = wordsGlobalVector[i];
+	// 			wordsGlobalVector[i] = wordsGlobalVector[j];
+	// 			wordsGlobalVector[j] = tmpString;
 
-				//spamWordsInDocumentsCount
-				tmpDouble = spamWordsInDocumentsCount[i];
-				spamWordsInDocumentsCount[i] = spamWordsInDocumentsCount[j];
-				spamWordsInDocumentsCount[j] = tmpDouble;
+	// 			//spamWordsInDocumentsCount
+	// 			tmpDouble = spamWordsInDocumentsCount[i];
+	// 			spamWordsInDocumentsCount[i] = spamWordsInDocumentsCount[j];
+	// 			spamWordsInDocumentsCount[j] = tmpDouble;
 
-				//hamWordsInDocumentsCount
-				tmpDouble = hamWordsInDocumentsCount[i];
-				hamWordsInDocumentsCount[i] = hamWordsInDocumentsCount[j];
-				hamWordsInDocumentsCount[j] = tmpDouble;
+	// 			//hamWordsInDocumentsCount
+	// 			tmpDouble = hamWordsInDocumentsCount[i];
+	// 			hamWordsInDocumentsCount[i] = hamWordsInDocumentsCount[j];
+	// 			hamWordsInDocumentsCount[j] = tmpDouble;
 
-				//mutual information
-				tmpDouble = informationGain[i];
-				informationGain[i] = informationGain[j];
-				informationGain[j] = tmpDouble;
+	// 			//mutual information
+	// 			tmpDouble = informationGain[i];
+	// 			informationGain[i] = informationGain[j];
+	// 			informationGain[j] = tmpDouble;
 
-				//spamWordsFreq
-				tmpInt = spamWordsFreq[i];
-				spamWordsFreq[i] = spamWordsFreq[j];
-				spamWordsFreq[j] = tmpInt;
+	// 			//spamWordsFreq
+	// 			tmpInt = spamWordsFreq[i];
+	// 			spamWordsFreq[i] = spamWordsFreq[j];
+	// 			spamWordsFreq[j] = tmpInt;
 
-				//hamWordsFreq
-				tmpInt = hamWordsFreq[i];
-				hamWordsFreq[i] = hamWordsFreq[j];
-				hamWordsFreq[j] = tmpInt;
-			}
-		}
-		if ((i % 100) == 0)
-		{
-			std::cout << "Processing the " << i << "th selected feature" << endl;
-		}
-	}
+	// 			//hamWordsFreq
+	// 			tmpInt = hamWordsFreq[i];
+	// 			hamWordsFreq[i] = hamWordsFreq[j];
+	// 			hamWordsFreq[j] = tmpInt;
+	// 		}
+	// 	}
+	// 	if ((i % 100) == 0)
+	// 	{
+	// 		std::cout << "Processing the " << i << "th selected feature" << endl;
+	// 	}
+	// }
 	
 	time_end = chrono::high_resolution_clock::now();
 	time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
@@ -577,10 +577,9 @@ void MultinomialNB_Email::getTVaccordingToSelectedFeatures(vector<string> select
 	// for (const auto &feature : trainingVector) cout << feature << " "; cout << endl;
 	
 	// cout << "trainingVector.size()=" << trainingVector.size() << endl;
-	//! remove after applying polymodulus
-	int m = selectedFeatures.size();
-	trainingVector.resize(2 * m + 3, 0);
-	// cout << "trainingVector.size() after resize=" << trainingVector.size() << endl;
+	// //! remove after applying polymodulus
+	// int m = selectedFeatures.size();
+	// trainingVector.resize(2 * m + 3, 0);
 	for (int i = 0; i < selectedFeatures.size(); i++)
 	{
 		// cout << "selectedFeatures[" << i << "]=" << selectedFeatures[i] << endl;
