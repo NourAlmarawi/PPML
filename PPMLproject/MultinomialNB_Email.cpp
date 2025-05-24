@@ -1,8 +1,8 @@
-#include <time.h>                // for time()
+#include <time.h> // for time()
 #include "MultinomialNB_Email.h"
 #include <cmath>
-#include <fstream>          // for ifstream
-#include <cctype>           
+#include <fstream> // for ifstream
+#include <cctype>
 #include <string>
 #include <vector>
 #include <chrono>
@@ -38,31 +38,38 @@ MultinomialNB_Email::MultinomialNB_Email(string path, int mValue, long long int 
 	chrono::high_resolution_clock::time_point time_start, time_end;
 	time_start = chrono::high_resolution_clock::now();
 	time_end = chrono::high_resolution_clock::now();
-	auto time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);	
+	auto time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
 	cout << "Initializing now.." << endl;
-	
+
 	// reading ham
 	string hamPath = path + "\\ham", filename, ANSIWord;
-	cout <<"Reading ham files: "<< filename << endl;
+	cout << "Reading ham files: " << endl;
 	time_start = chrono::high_resolution_clock::now();
 	int hamFileCount = 0;
-	const int totalHamFiles = 1500;
-	for (const auto & entry : fs::filesystem::recursive_directory_iterator(hamPath))
+	const int totalHamFiles = std::distance(fs::filesystem::recursive_directory_iterator(path + "\\ham"), fs::filesystem::recursive_directory_iterator());
+	for (const auto &entry : fs::filesystem::recursive_directory_iterator(hamPath))
 	{
 		filename = entry.path().string();
 		// cout <<"opening file: "<< filename << endl;
+
+		// Progress bar
 		hamFileCount++;
 		int progress = (hamFileCount * 100) / totalHamFiles;
 		cout << "\r[";
 		int barWidth = 50;
 		int pos = (progress * barWidth) / 100;
-		for (int i = 0; i < barWidth; ++i) {
-			if (i < pos) cout << "=";
-			else if (i == pos) cout << ">";
-			else cout << " ";
+		for (int i = 0; i < barWidth; ++i)
+		{
+			if (i < pos)
+				cout << "=";
+			else if (i == pos)
+				cout << ">";
+			else
+				cout << " ";
 		}
 		cout << "] " << progress << "% (" << hamFileCount << "/" << totalHamFiles << ")" << flush;
-		if (hamFileCount == totalHamFiles) cout << endl;
+		if (hamFileCount == totalHamFiles)
+			cout << endl;
 
 		ifstream inputFile(filename);
 		vector<string> tmpLocalWords;
@@ -78,7 +85,7 @@ MultinomialNB_Email::MultinomialNB_Email(string path, int mValue, long long int 
 				if (ANSIWord == tmpLocalWords[i])
 				{
 					existsInList = true;
-					//tmpLocalWordsInDoc[i] = 1;
+					// tmpLocalWordsInDoc[i] = 1;
 					tmpLocalWordsFreq[i] += 1;
 					break;
 				}
@@ -118,29 +125,33 @@ MultinomialNB_Email::MultinomialNB_Email(string path, int mValue, long long int 
 	}
 
 	// reading spam
-	cout <<"Reading spam files: "<< filename << endl;
+	cout << "Reading spam files: " << endl;
 	int spamFileCount = 0;
-	const int totalSpamFiles = 3675;
+	const int totalSpamFiles = std::distance(fs::filesystem::recursive_directory_iterator(path + "\\spam"), fs::filesystem::recursive_directory_iterator());
 	string spamPath = path + "\\spam";
-	for (const auto & entry : fs::filesystem::recursive_directory_iterator(spamPath))
+	for (const auto &entry : fs::filesystem::recursive_directory_iterator(spamPath))
 	{
 		filename = entry.path().string();
 		// cout <<"opening file: "<< filename << endl;
 
+		// Progress bar
 		spamFileCount++;
 		int progress = (spamFileCount * 100) / totalSpamFiles;
 		cout << "\r[";
 		int barWidth = 50;
 		int pos = (progress * barWidth) / 100;
-		for (int i = 0; i < barWidth; ++i) {
-			if (i < pos) cout << "=";
-			else if (i == pos) cout << ">";
-			else cout << " ";
+		for (int i = 0; i < barWidth; ++i)
+		{
+			if (i < pos)
+				cout << "=";
+			else if (i == pos)
+				cout << ">";
+			else
+				cout << " ";
 		}
 		cout << "] " << progress << "% (" << spamFileCount << "/" << totalSpamFiles << ")" << flush;
-		if (spamFileCount == totalSpamFiles) cout << endl;
-
-
+		if (spamFileCount == totalSpamFiles)
+			cout << endl;
 
 		ifstream inputFile(filename);
 		vector<string> tmpLocalWords;
@@ -156,7 +167,7 @@ MultinomialNB_Email::MultinomialNB_Email(string path, int mValue, long long int 
 				if (ANSIWord == tmpLocalWords[i])
 				{
 					existsInList = true;
-					//tmpLocalWordsInDoc[i] = 1;
+					// tmpLocalWordsInDoc[i] = 1;
 					tmpLocalWordsFreq[i] += 1;
 					break;
 				}
@@ -197,205 +208,9 @@ MultinomialNB_Email::MultinomialNB_Email(string path, int mValue, long long int 
 
 	time_end = chrono::high_resolution_clock::now();
 	time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
-	timeElapsed = time_diff.count()/1000;
+	timeElapsed = time_diff.count() / 1000;
 	cout << "In total we have " << wordsGlobalVector.size() << " words in this dataset" << endl;
 	cout << "The initialization was done in [" << time_diff.count() / 1000 << " ms]" << endl;
-}
-
-void MultinomialNB_Email::getPrivateData(vector<string> &wordsGlobalVectorOutput,
-	vector<long long int> &hamWordsInDocumentsCountOutput,
-	vector<long long int> &spamWordsInDocumentsCountOutput,	
-	int & hamMailsOutput, int & spamMailsOutput)
-{
-	wordsGlobalVectorOutput = wordsGlobalVector;
-	hamWordsInDocumentsCountOutput = hamWordsInDocumentsCount;
-	spamWordsInDocumentsCountOutput = spamWordsInDocumentsCount;	
-	hamMailsOutput = hamMails;
-	spamMailsOutput = spamMails;
-}
-
-void MultinomialNB_Email::getWordsVector(vector<string> &wordsGlobalVectorOutput)
-{
-	wordsGlobalVectorOutput = wordsGlobalVector;
-}
-
-
-void MultinomialNB_Email::getExtendedPrivateData(const vector<string> &wordsGlobalAggregated,
-	vector<long long int> &hamWordsInDocumentsCountGlobal,
-	vector<long long int> &spamWordsInDocumentsCountGlobal,
-	int & hamMailsOutput, int & spamMailsOutput)
-{
-	hamMailsOutput = hamMails;
-	spamMailsOutput = spamMails;
-
-	for (int i = 0; i < wordsGlobalAggregated.size(); i++)
-	{
-		for (int j = 0; j < wordsGlobalVector.size(); j++)
-		{
-			if (wordsGlobalAggregated[i] == wordsGlobalVector[j])
-			{
-				hamWordsInDocumentsCountGlobal[i] = hamWordsInDocumentsCount[j];
-				spamWordsInDocumentsCountGlobal[i] = spamWordsInDocumentsCount[j];
-				break;
-			}			
-		}
-	}
-}
-
-
-void  MultinomialNB_Email::getSelectedFeaturesParameters(vector<string> &selectedFeaturesOutput,
-	vector<long double>& logOfProbWordIsHamOutput,
-	vector<long double>& logOfProbWordIsSpamOutput,
-	long double &logProbHamOutput, long double & logProbSpamOutput)
-{
-	selectedFeaturesOutput = selectedFeatures;
-	logOfProbWordIsHamOutput = logOfProbWordIsHam;
-	logOfProbWordIsSpamOutput = logOfProbWordIsSpam;
-	logProbHamOutput = logProbHam;
-	logProbSpamOutput = logProbSpam;	
-}
-
-void MultinomialNB_Email::getSelectedFeaturesOnly(vector<string> &selectedFeaturesOutput)
-{
-	selectedFeaturesOutput = selectedFeatures;
-}
-
-
-void MultinomialNB_Email::classify(string path, long long int &timeElapsed)
-{
-	chrono::high_resolution_clock::time_point time_start, time_end;
-	time_start = chrono::high_resolution_clock::now();
-	time_end = chrono::high_resolution_clock::now();
-	auto time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
-
-	int countQuery = 0;
-	string hamPath = path + "\\ham", filename, word;
-	long double logSpamQueryProb = 0.0, logHamQueryProb = 0.0;
-	
-	time_start = chrono::high_resolution_clock::now();
-	for (const auto & entry : fs::filesystem::recursive_directory_iterator(hamPath))
-	{
-		filename = entry.path().string();
-		cout <<"opening file: "<< filename << endl;
-		
-		logSpamQueryProb = logProbSpam;
-		logHamQueryProb = logProbHam;
-
-		ifstream inputFile(filename);
-
-		int begIndex = 1, endIndex = m, midIndex = (begIndex + endIndex) / 2;
-		while (inputFile >> word)
-		{
-			begIndex = 1, endIndex = m, midIndex = (begIndex + endIndex) / 2;
-			while (!((begIndex + 1) == endIndex))
-			{
-				if (word == selectedFeatures[midIndex])
-				{
-					logSpamQueryProb += logOfProbWordIsSpam[midIndex];
-					logHamQueryProb += logOfProbWordIsHam[midIndex];
-					break;
-				}
-				else if (word > selectedFeatures[midIndex])
-				{
-					endIndex = midIndex;
-					midIndex = (begIndex + endIndex) / 2;
-				}
-				else
-				{
-					begIndex = midIndex;
-					midIndex = (begIndex + endIndex) / 2;
-				}
-			}
-			if (word == selectedFeatures[begIndex])
-			{
-				logSpamQueryProb += logOfProbWordIsSpam[begIndex];
-				logHamQueryProb += logOfProbWordIsHam[begIndex];
-			}
-			else if (word == selectedFeatures[endIndex])
-			{
-				logSpamQueryProb += logOfProbWordIsSpam[endIndex];
-				logHamQueryProb += logOfProbWordIsHam[endIndex];
-			}
-		}
-
-		if (logHamQueryProb > logSpamQueryProb)
-			confusionMatrix[0][0]++;
-		else
-			confusionMatrix[0][1]++;
-	}
-
-	countQuery = 0;
-	string spamPath = path + "\\spam";
-	for (const auto & entry : fs::filesystem::recursive_directory_iterator(spamPath))
-	{
-		filename = entry.path().string();
-		cout <<"opening file: "<< filename << endl;
-		logSpamQueryProb = logProbSpam;
-		logHamQueryProb = logProbHam;
-
-		ifstream inputFile(filename);
-
-		int begIndex = 1, endIndex = m, midIndex = (begIndex + endIndex) / 2;
-		while (inputFile >> word)
-		{
-			//wordCount++;
-			//existsInList = false;
-			begIndex = 1, endIndex = m, midIndex = (begIndex + endIndex) / 2;
-			while (!((begIndex + 1) == endIndex))
-			{
-				if (word == selectedFeatures[midIndex])
-				{
-					logSpamQueryProb += logOfProbWordIsSpam[midIndex];
-					logHamQueryProb += logOfProbWordIsHam[midIndex];
-					break;
-				}
-				else if (word > selectedFeatures[midIndex])
-				{
-					endIndex = midIndex;
-					midIndex = (begIndex + endIndex) / 2;
-				}
-				else
-				{
-					begIndex = midIndex;
-					midIndex = (begIndex + endIndex) / 2;
-				}
-			}
-			if (word == selectedFeatures[begIndex])
-			{
-				logSpamQueryProb += logOfProbWordIsSpam[begIndex];
-				logHamQueryProb += logOfProbWordIsHam[begIndex];
-			}
-			else if (word == selectedFeatures[endIndex])
-			{
-				logSpamQueryProb += logOfProbWordIsSpam[endIndex];
-				logHamQueryProb += logOfProbWordIsHam[endIndex];
-			}
-
-		}
-
-		if (logSpamQueryProb > logHamQueryProb)
-			confusionMatrix[1][1]++;
-		else
-			confusionMatrix[1][0]++;		
-	}
-	time_end = chrono::high_resolution_clock::now();
-	time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
-	timeElapsed = time_diff.count() / 1000;
-	cout << "The classification was done in [" << time_diff.count() / 1000 << " ms]" << endl;
-}
-
-void MultinomialNB_Email::printConfionMat()
-{
-	cout << "Printing the confusion mat for the improved classification case:" << endl;
-	for (int i = 0; i < confusionMatrix.size(); i++)
-	{
-		cout << endl;
-		for (int j = 0; j < confusionMatrix[0].size(); j++)
-		{
-			cout << confusionMatrix[i][j] << "\t";
-		}
-	}
-	cout << endl << "The accuracy of the improved classification is: " << (long double)100 * (confusionMatrix[0][0] + confusionMatrix[1][1]) / (long double)(hamMails + spamMails) << " %" << endl << endl;
 }
 
 void MultinomialNB_Email::train(long long int &timeElapsed)
@@ -404,14 +219,16 @@ void MultinomialNB_Email::train(long long int &timeElapsed)
 	time_start = chrono::high_resolution_clock::now();
 	time_end = chrono::high_resolution_clock::now();
 	auto time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
-		
+
 	vector<string> tmpSelectedFeatures(m + 1, "");
 	selectedFeatures = tmpSelectedFeatures;
-	vector<long long int> spamWordsNOTInDocumentsCount; spamWordsNOTInDocumentsCount.push_back(0);
-	vector<long long int> hamWordsNOTInDocumentsCount; hamWordsNOTInDocumentsCount.push_back(0);
+	vector<long long int> spamWordsNOTInDocumentsCount;
+	spamWordsNOTInDocumentsCount.push_back(0);
+	vector<long long int> hamWordsNOTInDocumentsCount;
+	hamWordsNOTInDocumentsCount.push_back(0);
 	vector<long double> tmpLogOfProbWordIsHam(m + 1, 0), tmpLogOfProbWordIsSpam(m + 1, 0);
-	logOfProbWordIsHam = tmpLogOfProbWordIsHam; logOfProbWordIsSpam = tmpLogOfProbWordIsSpam;
-
+	logOfProbWordIsHam = tmpLogOfProbWordIsHam;
+	logOfProbWordIsSpam = tmpLogOfProbWordIsSpam;
 
 	time_start = chrono::high_resolution_clock::now();
 	for (int i = 1; i < wordsGlobalVector.size(); i++)
@@ -421,18 +238,19 @@ void MultinomialNB_Email::train(long long int &timeElapsed)
 	}
 
 	int totalNrMails = spamMails + hamMails;
-	long double probSpam = (long double)(spamMails + m) / (long double)(totalNrMails + 2*m), probHam = 1 - probSpam;
+	long double probSpam = (long double)(spamMails + m) / (long double)(totalNrMails + 2 * m), probHam = 1 - probSpam;
 	logProbHam = log(probHam);
 	logProbSpam = log(probSpam);
 
 	vector<long double> probWordInDoc(wordsGlobalVector.size(), 0),
-		probWordNOTInDoc(wordsGlobalVector.size(), 0); //p(tk) and p(not(tk))
+		probWordNOTInDoc(wordsGlobalVector.size(), 0); // p(tk) and p(not(tk))
 	vector<long double> probWordInHamDocs(wordsGlobalVector.size(), 0),
 		probWordNOTInHamDocs(wordsGlobalVector.size(), 0),
 		probWordInSpamDocs(wordsGlobalVector.size(), 0),
 		probWordNOTInSpamDocs(wordsGlobalVector.size(), 0);
 	vector<long double> informationGain(wordsGlobalVector.size(), -9999999999.9);
 
+	// calculating information gain
 	// ignoring words that appear in less than 5 documents
 	// due to their low information gain
 	int countOfLessThanFive = 0;
@@ -440,28 +258,25 @@ void MultinomialNB_Email::train(long long int &timeElapsed)
 	{
 		if ((hamWordsInDocumentsCount[i] + spamWordsInDocumentsCount[i]) >= 5)
 		{
-			probWordInDoc[i] = ((long double)hamWordsInDocumentsCount[i] + (long double)spamWordsInDocumentsCount[i]); // ((long double)totalNrMails);
+			probWordInDoc[i] = ((long double)hamWordsInDocumentsCount[i] + (long double)spamWordsInDocumentsCount[i]);
 			probWordNOTInDoc[i] = (long double)(totalNrMails - probWordInDoc[i]);
 
-			probWordInHamDocs[i] = (long double)(hamWordsInDocumentsCount[i] + 1); // (long double)(totalNrMails + wordsGlobalVector.size());
-			probWordNOTInHamDocs[i] = (long double)(hamWordsNOTInDocumentsCount[i] + 1); //(long double)(totalNrMails + wordsGlobalVector.size());
-			probWordInSpamDocs[i] = (long double)(spamWordsInDocumentsCount[i] + 1); // (long double)(totalNrMails + wordsGlobalVector.size());
-			probWordNOTInSpamDocs[i] = (long double)(spamWordsNOTInDocumentsCount[i] + 1); // (long double)(totalNrMails + wordsGlobalVector.size());
+			probWordInHamDocs[i] = (long double)(hamWordsInDocumentsCount[i] + 1);
+			probWordNOTInHamDocs[i] = (long double)(hamWordsNOTInDocumentsCount[i] + 1);
+			probWordInSpamDocs[i] = (long double)(spamWordsInDocumentsCount[i] + 1);
+			probWordNOTInSpamDocs[i] = (long double)(spamWordsNOTInDocumentsCount[i] + 1);
 
 			const long double smoothing = 1e-10; // Small constant to avoid log(0)
-			informationGain[i] = probWordInHamDocs[i] * log((probWordInHamDocs[i] + smoothing) / ((probWordInDoc[i] * probHam) + smoothing))
-				+ probWordNOTInHamDocs[i] * log((probWordNOTInHamDocs[i] + smoothing) / ((probWordNOTInDoc[i] * probHam) + smoothing))
-				+ probWordInSpamDocs[i] * log((probWordInSpamDocs[i] + smoothing) / ((probWordInDoc[i] * probSpam) + smoothing))
-				+ probWordNOTInSpamDocs[i] * log((probWordNOTInSpamDocs[i] + smoothing) / ((probWordNOTInDoc[i] * probSpam) + smoothing));
-
+			informationGain[i] = probWordInHamDocs[i] * log((probWordInHamDocs[i] + smoothing) / ((probWordInDoc[i] * probHam) + smoothing)) + probWordNOTInHamDocs[i] * log((probWordNOTInHamDocs[i] + smoothing) / ((probWordNOTInDoc[i] * probHam) + smoothing)) + probWordInSpamDocs[i] * log((probWordInSpamDocs[i] + smoothing) / ((probWordInDoc[i] * probSpam) + smoothing)) + probWordNOTInSpamDocs[i] * log((probWordNOTInSpamDocs[i] + smoothing) / ((probWordNOTInDoc[i] * probSpam) + smoothing));
 		}
 		else
 		{
 			countOfLessThanFive++;
 		}
 	}
-	cout << "At the train f-ion() of MultinomialNB_Email class countOfLessThanFive=" << countOfLessThanFive << endl;
+	cout << "words ignored = countOfLessThanFive=" << countOfLessThanFive << endl;
 
+	// sorting the words based on information gain
 	string tmpString;
 	long long int tmpInt;
 	long double tmpDouble;
@@ -471,33 +286,33 @@ void MultinomialNB_Email::train(long long int &timeElapsed)
 		{
 			if (informationGain[i] < informationGain[j])
 			{
-				//swap all the stuff
-				//wordsGlobalVector
+				// swap all the stuff
+				// wordsGlobalVector
 				tmpString = wordsGlobalVector[i];
 				wordsGlobalVector[i] = wordsGlobalVector[j];
 				wordsGlobalVector[j] = tmpString;
 
-				//spamWordsInDocumentsCount
+				// spamWordsInDocumentsCount
 				tmpDouble = spamWordsInDocumentsCount[i];
 				spamWordsInDocumentsCount[i] = spamWordsInDocumentsCount[j];
 				spamWordsInDocumentsCount[j] = tmpDouble;
 
-				//hamWordsInDocumentsCount
+				// hamWordsInDocumentsCount
 				tmpDouble = hamWordsInDocumentsCount[i];
 				hamWordsInDocumentsCount[i] = hamWordsInDocumentsCount[j];
 				hamWordsInDocumentsCount[j] = tmpDouble;
 
-				//mutual information
+				// mutual information
 				tmpDouble = informationGain[i];
 				informationGain[i] = informationGain[j];
 				informationGain[j] = tmpDouble;
-				
-				//spamWordsFreq
+
+				// spamWordsFreq
 				tmpInt = spamWordsFreq[i];
 				spamWordsFreq[i] = spamWordsFreq[j];
 				spamWordsFreq[j] = tmpInt;
-				
-				//hamWordsFreq
+
+				// hamWordsFreq
 				tmpInt = hamWordsFreq[i];
 				hamWordsFreq[i] = hamWordsFreq[j];
 				hamWordsFreq[j] = tmpInt;
@@ -508,13 +323,12 @@ void MultinomialNB_Email::train(long long int &timeElapsed)
 	if (wordsGlobalVector.size() < m)
 		m = wordsGlobalVector.size();
 
-
 	cout << "The features with the top " << m << " highest mutual information are:\n\n";
 	cout << setw(15) << "Feature"
-			  << setw(20) << "Info Gain"
-			  << setw(25) << "Log(P(Ham|Word))"
-			  << setw(25) << "Log(P(Spam|Word))"
-			  << endl;
+		 << setw(20) << "Info Gain"
+		 << setw(25) << "Log(P(Ham|Word))"
+		 << setw(25) << "Log(P(Spam|Word))"
+		 << endl;
 	for (int i = 1; i <= m; i++)
 	{
 		selectedFeatures[i] = wordsGlobalVector[i];
@@ -523,112 +337,248 @@ void MultinomialNB_Email::train(long long int &timeElapsed)
 		logOfProbWordIsSpam[i] = log(((long double)spamWordsFreq[i] + 1 + smoothing) / (long double)(spamMails + m + smoothing));
 
 		cout << setw(15) << selectedFeatures[i]
-				  << setw(20) << informationGain[i]
-				  << setw(25) << logOfProbWordIsHam[i]
-				  << setw(25) << logOfProbWordIsSpam[i]
-				  << endl;
+			 << setw(20) << informationGain[i]
+			 << setw(25) << logOfProbWordIsHam[i]
+			 << setw(25) << logOfProbWordIsSpam[i]
+			 << endl;
 	}
-	
-	// for (int i = 1; i < m; i++)
-	// {
-	// 	for (int j = i + 1; j <= m; j++)
-	// 	{
-	// 		if (selectedFeatures[i] < selectedFeatures[j])
-	// 		{
-	// 			tmpString = selectedFeatures[i];
-	// 			selectedFeatures[i] = selectedFeatures[j];
-	// 			selectedFeatures[j] = tmpString;
-
-	// 			tmpDouble = logOfProbWordIsHam[i];
-	// 			logOfProbWordIsHam[i] = logOfProbWordIsHam[j];
-	// 			logOfProbWordIsHam[j] = tmpDouble;
-
-	// 			tmpDouble = logOfProbWordIsSpam[i];
-	// 			logOfProbWordIsSpam[i] = logOfProbWordIsSpam[j];
-	// 			logOfProbWordIsSpam[j] = tmpDouble;
-
-	// 			// swap all the stuff
-	// 			//wordsGlobalVector
-	// 			tmpString = wordsGlobalVector[i];
-	// 			wordsGlobalVector[i] = wordsGlobalVector[j];
-	// 			wordsGlobalVector[j] = tmpString;
-
-	// 			//spamWordsInDocumentsCount
-	// 			tmpDouble = spamWordsInDocumentsCount[i];
-	// 			spamWordsInDocumentsCount[i] = spamWordsInDocumentsCount[j];
-	// 			spamWordsInDocumentsCount[j] = tmpDouble;
-
-	// 			//hamWordsInDocumentsCount
-	// 			tmpDouble = hamWordsInDocumentsCount[i];
-	// 			hamWordsInDocumentsCount[i] = hamWordsInDocumentsCount[j];
-	// 			hamWordsInDocumentsCount[j] = tmpDouble;
-
-	// 			//mutual information
-	// 			tmpDouble = informationGain[i];
-	// 			informationGain[i] = informationGain[j];
-	// 			informationGain[j] = tmpDouble;
-
-	// 			//spamWordsFreq
-	// 			tmpInt = spamWordsFreq[i];
-	// 			spamWordsFreq[i] = spamWordsFreq[j];
-	// 			spamWordsFreq[j] = tmpInt;
-
-	// 			//hamWordsFreq
-	// 			tmpInt = hamWordsFreq[i];
-	// 			hamWordsFreq[i] = hamWordsFreq[j];
-	// 			hamWordsFreq[j] = tmpInt;
-	// 		}
-	// 	}
-	// 	if ((i % 100) == 0)
-	// 	{
-	// 		cout << "Processing the " << i << "th selected feature" << endl;
-	// 	}
-	// }
-	
 	time_end = chrono::high_resolution_clock::now();
 	time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
 	timeElapsed = time_diff.count() / 1000;
 	cout << "The real trainig of the selected features was done in " << timeElapsed << " ms" << endl;
 }
 
-void MultinomialNB_Email::getTVaccordingToSelectedFeatures(vector<string> selectedFeatures,
-	vector<int64_t> &trainingVector)
+void MultinomialNB_Email::getSelectedFeatures(vector<string> &selectedFeaturesOutput)
 {
-	// cout << "selectedFeatures.size()=" << selectedFeatures.size() << endl;
-	// cout << "trainingVector.size()=" << trainingVector.size() << endl;
-	// cout << "wordsGlobalVector.size()=" << wordsGlobalVector.size() << endl;
-	// cout << "hamWordsFreq.size()=" << hamWordsFreq.size() << endl;
-	// cout << "spamWordsFreq.size()=" << spamWordsFreq.size() << endl <<endl;
-	// cout << "Selected Features Output:" << endl;
-	// for (const auto &feature : selectedFeatures) cout << feature << " "; cout << endl;
-	// cout << "Words Global Vector Output:" << endl;
-	// for (const auto &feature : wordsGlobalVector) cout << feature << " "; cout << endl;
-	// cout << "Ham Words Freq Output:" << endl;
-	// for (const auto &feature : hamWordsFreq) cout << feature << " "; cout << endl;
-	// cout << "Spam Words Freq Output:" << endl;	
-	// for (const auto &feature : spamWordsFreq) cout << feature << " "; cout << endl;
-	// cout << "trainingVector Output:" << endl;
-	// for (const auto &feature : trainingVector) cout << feature << " "; cout << endl;
-	
-	// cout << "trainingVector.size()=" << trainingVector.size() << endl;
-	// //! remove after applying polymodulus
-	// int m = selectedFeatures.size();
-	// trainingVector.resize(2 * m + 3, 0);
-	for (int i = 0; i < selectedFeatures.size(); i++)
+	selectedFeaturesOutput = selectedFeatures;
+}
+
+void MultinomialNB_Email::getTrainingVector(vector<long double> &trainingVector, int polyModulus){
+	finalModel.resize(polyModulus, 0);
+	// cout << "logOfProbWordIsHam.size()=" << logOfProbWordIsHam.size() << endl;
+	// cout << "logOfProbWordIsSpam.size()=" << logOfProbWordIsSpam.size() << endl;
+	finalModel[0] = logProbHam;
+	finalModel[m + 1] = logProbSpam;
+	// finalModel[0] = 999; //? debug
+	// finalModel[m + 1] = 999; //? debug
+	for (int i = 1; i <= m; i++)
 	{
-		// cout << "selectedFeatures[" << i << "]=" << selectedFeatures[i] << endl;
-		for (int j = 0; j < wordsGlobalVector.size(); j++)
+		finalModel[i] = logOfProbWordIsHam[i];
+		finalModel[m + 1 + i] = logOfProbWordIsSpam[i];
+		// finalModel[i] = 555; //? debug
+		// finalModel[m + 1 + i] = 222; //? debug
+	}
+	trainingVector = finalModel;
+}
+
+vector<long double> MultinomialNB_Email::secureSum(vector<long double> &multiplied_query)
+{
+	int m = multiplied_query.size() / 2 - 1;
+	int n = static_cast<int>(log2(m + 1));
+	vector<long double> temp = multiplied_query;
+
+	// Sum first half (0 to m)
+	vector<long double> first_half(temp.begin(), temp.begin() + m + 1);
+	vector<long double> first_sum = first_half;
+	for (int i = 0; i < n; ++i)
+	{
+		vector<long double> rotated = first_sum;
+		rotate(rotated.begin(), rotated.begin() + (1 << i), rotated.end());
+		for (size_t idx = 0; idx < first_sum.size(); ++idx)
+			first_sum[idx] += rotated[idx];
+	}
+
+	// Sum second half (m+1 to end)
+	vector<long double> second_half(temp.begin() + m + 1, temp.end());
+	vector<long double> second_sum = second_half;
+	for (int i = 0; i < n; ++i)
+	{
+		vector<long double> rotated = second_sum;
+		rotate(rotated.begin(), rotated.begin() + (1 << i), rotated.end());
+		for (size_t idx = 0; idx < second_sum.size(); ++idx)
+			second_sum[idx] += rotated[idx];
+	}
+
+	// Combine results
+	vector<long double> result = temp;
+	for (int i = 0; i <= m; ++i)
+		result[i] = first_sum[i];
+	for (int i = 0; i < second_sum.size(); ++i)
+		result[m + 1 + i] = second_sum[i];
+
+	return result;
+}
+
+void MultinomialNB_Email::createSingleQuery(string filename)
+{
+	cout << "CLASSIFICATION ON " << filename << endl;
+	ifstream infile(filename);
+	vector<int> query(selectedFeatures.size(), 0);
+	string word;
+	while (infile >> word)
+	{
+		for (size_t i = 1; i < selectedFeatures.size(); ++i)
 		{
-			if (selectedFeatures[i] == wordsGlobalVector[j])
+			if (word == selectedFeatures[i])
 			{
-				// cout << "selectedFeatures[" << i << "]=" << selectedFeatures[i] << " == wordsGlobalVector[" << j << "]=" << wordsGlobalVector[j] << endl;
-				trainingVector[i + 1] = (int64_t) hamWordsFreq[j];
-				trainingVector[i + 1 + m + 1] = (int64_t)spamWordsFreq[j];
+				query[i]++;
 			}
 		}
-		// cout << "trainingVector[" << i + 1 << "]=" << trainingVector[i + 1] << endl;
 	}
-	trainingVector[0] = hamMails;
-	trainingVector[0 + m + 1] = spamMails;
-	trainingVector[trainingVector.size() - 1] = hamMails + spamMails;
+	infile.close();
+
+	query[0] = 1;
+	vector<int> duplicatedQuery = query;
+	query.insert(query.end(), duplicatedQuery.begin(), duplicatedQuery.end());
+
+	vector<long double> query_multiplied(query.size(), 0.0);
+	for (size_t i = 0; i < query.size() && i < finalModel.size(); ++i)
+		query_multiplied[i] = query[i] * finalModel[i];
+
+	// secure sum
+	vector<long double> summed_query = secureSum(query_multiplied);
+	// cout << "multiplied_query.size()=" << query_multiplied.size() << endl; //? debug
+	// cout << "summed_query.size()=" << summed_query.size() << endl;  // ? debug
+	// for (size_t i = 0; i < summed_query.size(); ++i) cout << summed_query[i] << " "; //? debug
+
+	cout << endl
+		 << "comparing the results" << endl;
+	if (summed_query[0] > summed_query[m + 1])
+		cout << "The email is classified as HAM" << endl;
+	else
+		cout << "The email is classified as SPAM" << endl;
+}
+
+bool MultinomialNB_Email::Query(string filename)
+// returns true if classified as HAM, false if classified as SPAM
+{
+	ifstream infile(filename);
+	if (!infile.is_open())
+	{
+		cout << "Error opening file: " << filename << endl;
+		return false;
+	}
+
+	vector<int> query(selectedFeatures.size(), 0);
+	string word;
+	while (infile >> word)
+	{
+		for (size_t i = 1; i < selectedFeatures.size(); ++i)
+		{
+			if (word == selectedFeatures[i])
+			{
+				query[i]++;
+			}
+		}
+	}
+	infile.close();
+
+	query[0] = 1;
+	vector<int> duplicatedQuery = query;
+	query.insert(query.end(), duplicatedQuery.begin(), duplicatedQuery.end());
+
+	vector<long double> query_multiplied(query.size(), 0.0);
+	for (size_t i = 0; i < query.size() && i < finalModel.size(); ++i)
+		query_multiplied[i] = query[i] * finalModel[i];
+
+	vector<long double> summed_query = secureSum(query_multiplied);
+
+	if (summed_query[0] > summed_query[m + 1])
+	{
+		return true; // classified as HAM
+	}
+	else
+	{
+		return false; // classified as SPAM
+	}
+}
+
+void MultinomialNB_Email::classify(string path)
+{
+	// Confusion matrix counters
+	int true_ham = 0, false_spam = 0, true_spam = 0, false_ham = 0;
+	vector<pair<string, int>> test_dirs = {{"ham", 0}, {"spam", 1}};
+	for (const auto &dirinfo : test_dirs)
+	{
+		// TODO: progress bar function
+		// int total_files = 3675 + 1500;
+		// int processed_files = 0;
+		// auto print_progress = [&](int processed) {
+		// 	int percent = static_cast<int>(100.0 * processed / total_files);
+		// 	cout << "\rProgress: [";
+		// 	int barWidth = 50;
+		// 	int pos = percent * barWidth / 100;
+		// 	for (int i = 0; i < barWidth; ++i)
+		// 		cout << (i < pos ? '=' : ' ');
+		// 	cout << "] " << percent << "% (" << processed << "/" << total_files << ")" << flush;
+		// };
+
+		string dirpath = path + "/" + dirinfo.first;
+
+		for (const auto &entry : fs::filesystem::directory_iterator(dirpath))
+		{
+			bool is_ham = Query(entry.path().string());
+
+			if (dirinfo.second == 0)
+			{ // actual ham
+				if (is_ham)
+				{
+					// true_ham;
+					confusionMatrix[0][0]++;
+				}
+				else
+				{
+					// false_spam
+					confusionMatrix[0][1]++;
+				}
+			}
+			else
+			{ // actual spam
+				if (!is_ham)
+				{
+					// true_spam
+					confusionMatrix[1][1]++;
+				}
+				else
+				{
+					// false_ham
+					confusionMatrix[1][0]++;
+				}
+			}
+		}
+	}
+}
+
+void MultinomialNB_Email::getConfusionMatrix(vector<vector<int>> &confusionMatrixOutput)
+{
+	confusionMatrixOutput = confusionMatrix;
+}
+
+void MultinomialNB_Email::saveModel(){
+	ofstream model_out(modelPath.empty() ? "final_model.txt" : modelPath);
+	if (model_out.is_open()) {
+		model_out << setprecision(10);
+		for (const auto& val : finalModel) {
+			model_out << val << "\n";
+		}
+		model_out.close();
+		cout << "Final model saved to final_model.txt" << endl;
+	} else {
+		cerr << "Error: Unable to open file for saving the model." << endl;
+	}
+}
+
+void MultinomialNB_Email::loadModel(vector<long double> &finalModel) {
+	ifstream model_in(modelPath.empty() ? "final_model.txt" : modelPath);
+	if (model_in.is_open()) {
+		finalModel.clear();
+		long double val;
+		while (model_in >> val) {
+			finalModel.push_back(val);
+		}
+		model_in.close();
+		cout << "Final model loaded from final_model.txt" << endl;
+	} else {
+		cerr << "Error: Unable to open file for loading the model." << endl;
+	}
 }

@@ -30,21 +30,34 @@ class MultinomialNB_Email
 {
 	public:
 		MultinomialNB_Email();
+		MultinomialNB_Email(const fileNameNode & hamFilesVector, const fileNameNode &spamFilesVector, int mValue, long long int &timeElapsed);
 		MultinomialNB_Email(string path, int mValue, long long int &timeElapsed);
 		void train(long long int &timeElapsed);
+		void classify(string path, long long int &timeElapsed);
+
+		void getWordsVector(vector<string> &wordsGlobalVectorOutput);
+
+		void getPrivateData(vector<string> &wordsGlobalVectorOutput, 
+			vector<long long int> &hamWordsInDocumentsCountOutput, 
+			vector<long long int> &spamWordsInDocumentsCountOutput, 
+			int & hamMailsOutput, int & spamMailsOutput);
+
+		void getExtendedPrivateData(const vector<string> &wordsGlobalAggregated,
+			vector<long long int> &hamWordsInDocumentsCountGlobal,
+			vector<long long int> &spamWordsInDocumentsCountGlobal,
+			int & hamMailsOutput, int & spamMailsOutput);
+
 		void getSelectedFeaturesParameters(vector<string> &selectedFeaturesOutput,
 			vector<long double>& logOfProbWordIsHamOutput,
 			vector<long double>& logOfProbWordIsSpamOutput,
 			long double &logProbHamOutput, long double & logProbSpamOutput);
-		void getSelectedFeatures(vector<string> &selectedFeaturesOutput);
-		void getTrainingVector(vector<long double> &trainingVector, int polyModulus);
-		void getConfusionMatrix(vector<vector<int>> &confusionMatrixOutput);
-		vector<long double> secureSum(vector<long double> &multiplied_query);
-		void createSingleQuery(string filename);
-		bool Query(string filename);
-		void classify(string path);
-		void saveModel();
-		void loadModel(vector<long double> &finalModel);
+
+		void getSelectedFeaturesOnly(vector<string> &selectedFeaturesOutput);
+
+		void printConfionMat();
+
+		void getTVaccordingToSelectedFeatures(vector<string> selectedFeatures,
+			vector<int64_t> &trainingVector);
 
 	
 	private:
@@ -61,8 +74,6 @@ class MultinomialNB_Email
 		long double logProbSpam, logProbHam;
 		vector<long double> logOfProbWordIsHam, logOfProbWordIsSpam;		
 
-		vector<long double> finalModel;
-		string modelPath;
 		vector<vector<int>> confusionMatrix{ {0,0},{0,0} };
 };
 
