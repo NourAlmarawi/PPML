@@ -11,9 +11,11 @@
 #include <iomanip>
 #include <experimental/filesystem>
 #include <numeric>
+#include "seal/seal.h"
 namespace fs = std::experimental;
 using std::vector;
 using namespace std;
+using namespace seal;
 
 MultinomialNB_Email::MultinomialNB_Email()
 {
@@ -474,9 +476,13 @@ bool MultinomialNB_Email::Query(string filename)
 	infile.close();
 
 	query[0] = 1;
+
+	//! might need to send the query as 1 copy only
+
 	vector<int> duplicatedQuery = query;
 	query.insert(query.end(), duplicatedQuery.begin(), duplicatedQuery.end());
 
+	//TODO: send the query
 	vector<long double> query_multiplied(query.size(), 0.0);
 	for (size_t i = 0; i < query.size() && i < finalModel.size(); ++i)
 		query_multiplied[i] = query[i] * finalModel[i];
@@ -568,7 +574,7 @@ void MultinomialNB_Email::saveModel(){
 	}
 }
 
-void MultinomialNB_Email::loadModel(vector<long double> &finalModel) {
+void MultinomialNB_Email::loadModel(){
 	ifstream model_in(modelPath.empty() ? "final_model.txt" : modelPath);
 	if (model_in.is_open()) {
 		finalModel.clear();
@@ -580,5 +586,35 @@ void MultinomialNB_Email::loadModel(vector<long double> &finalModel) {
 		cout << "Final model loaded from final_model.txt" << endl;
 	} else {
 		cerr << "Error: Unable to open file for loading the model." << endl;
+	}
+}
+
+void MultinomialNB_Email::saveSelectedFeatures(){
+	ofstream selected_features_out(selectedFeaturesPath.empty() ? "selected_features.txt" : selectedFeaturesPath);
+	if (selected_features_out.is_open()) {
+		selected_features_out << setprecision(10);
+		for (const auto& val : selectedFeatures) {
+			selected_features_out << val << "\n";
+		}
+		selected_features_out.close();
+		cout << "Selected Features saved to selected_features.txt" << endl;
+	} else {
+		cerr << "Error: Unable to open file for saving the selected features." << endl;
+	}
+}
+
+void MultinomialNB_Email::loadSelectedFeatures(){
+	ifstream selected_features_input(selectedFeaturesPath.empty() ? "selected_features.txt" : selectedFeaturesPath);
+	if (selected_features_input.is_open()) {
+		selectedFeatures.clear();
+		selectedFeatures.push_back("");
+		string val;
+		while (selected_features_input >> val) {
+			selectedFeatures.push_back(val);
+		}
+		selected_features_input.close();
+		cout << "Selected Features loaded from selected_features.txt" << endl;
+	} else {
+		cerr << "Error: Unable to open file for loading the selected features." << endl;
 	}
 }

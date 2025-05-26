@@ -5,7 +5,9 @@
 #include <cctype>           // for tolower(), isalpha()
 #include <string>
 #include <vector>
+#include <seal/seal.h>
 using namespace std;
+using namespace seal;
 
 #ifndef _MultinomialNB_Email_H
 #define _MultinomialNB_Email_H
@@ -41,10 +43,13 @@ class MultinomialNB_Email
 		void getConfusionMatrix(vector<vector<int>> &confusionMatrixOutput);
 		vector<long double> secureSum(vector<long double> &multiplied_query);
 		void createSingleQuery(string filename);
-		bool Query(string filename);
-		void classify(string path);
+        bool Query(string filename);
+        void classify(string path);
 		void saveModel();
-		void loadModel(vector<long double> &finalModel);
+		void loadModel();
+		void saveSelectedFeatures();
+		void loadSelectedFeatures();
+		Ciphertext evaluateEncryptedQuery(Ciphertext &encrypted_query, Evaluator &evaluator, BatchEncoder &encoder, GaloisKeys &galois_keys);
 
 	
 	private:
@@ -63,6 +68,7 @@ class MultinomialNB_Email
 
 		vector<long double> finalModel;
 		string modelPath;
+		string selectedFeaturesPath;
 		vector<vector<int>> confusionMatrix{ {0,0},{0,0} };
 };
 
