@@ -451,7 +451,7 @@ void MultinomialNB_Email::createSingleQuery(string filename)
 		cout << "The email is classified as SPAM" << endl;
 }
 
-bool MultinomialNB_Email::Query(string filename)
+bool MultinomialNB_Email::queryPlain(string filename)
 // returns true if classified as HAM, false if classified as SPAM
 {
 	ifstream infile(filename);
@@ -477,12 +477,9 @@ bool MultinomialNB_Email::Query(string filename)
 
 	query[0] = 1;
 
-	//! might need to send the query as 1 copy only
-
 	vector<int> duplicatedQuery = query;
 	query.insert(query.end(), duplicatedQuery.begin(), duplicatedQuery.end());
 
-	//TODO: send the query
 	vector<long double> query_multiplied(query.size(), 0.0);
 	for (size_t i = 0; i < query.size() && i < finalModel.size(); ++i)
 		query_multiplied[i] = query[i] * finalModel[i];
@@ -499,7 +496,7 @@ bool MultinomialNB_Email::Query(string filename)
 	}
 }
 
-void MultinomialNB_Email::classify(string path)
+void MultinomialNB_Email::classifyPlain(string path)
 {
 	// Confusion matrix counters
 	int true_ham = 0, false_spam = 0, true_spam = 0, false_ham = 0;
@@ -523,7 +520,7 @@ void MultinomialNB_Email::classify(string path)
 
 		for (const auto &entry : fs::filesystem::directory_iterator(dirpath))
 		{
-			bool is_ham = Query(entry.path().string());
+			bool is_ham = queryPlain(entry.path().string());
 
 			if (dirinfo.second == 0)
 			{ // actual ham
@@ -572,6 +569,30 @@ void MultinomialNB_Email::saveModel(){
 	} else {
 		cerr << "Error: Unable to open file for saving the model." << endl;
 	}
+
+	ofstream ham_probs_out("TVHamProbs.txt");
+	if (ham_probs_out.is_open()) {
+		int K = 8;
+		for (int i = 0; i <= m && i < finalModel.size(); ++i) {
+			ham_probs_out << static_cast<int64_t>(finalModel[i] * K) << "\n";
+		}
+		ham_probs_out.close();
+		cout << "TVHamProbs saved to TVHamProbs.txt" << endl;
+	} else {
+		cerr << "Error: Unable to open TVHamProbs.txt for writing." << endl;
+	}
+
+	ofstream spam_probs_out("TVSpamProbs.txt");
+	if (spam_probs_out.is_open()) {
+		int K = 8;
+		for (int i = m + 1; i <= 2 * m + 1 && i < finalModel.size(); ++i) {
+			spam_probs_out << static_cast<int64_t>(finalModel[i] * K) << "\n";
+		}
+		spam_probs_out.close();
+		cout << "TVSpamProbs saved to TVSpamProbs.txt" << endl;
+	} else {
+		cerr << "Error: Unable to open TVSpamProbs.txt for writing." << endl;
+	}
 }
 
 void MultinomialNB_Email::loadModel(){
@@ -617,4 +638,82 @@ void MultinomialNB_Email::loadSelectedFeatures(){
 	} else {
 		cerr << "Error: Unable to open file for loading the selected features." << endl;
 	}
+}
+
+Ciphertext MultinomialNB_Email::evaluateEncryptedQuery(Ciphertext &encrypted_query, Evaluator &evaluator, BatchEncoder &encoder, GaloisKeys &galois_keys, RelinKeys &relin_keys)
+{
+	Ciphertext result = encrypted_query;
+	vector<int64_t> TVHamProbs = getTVHamProbs();
+	vector<int64_t> TVSpamProbs = getTVSpamProbs();
+
+	//? debug
+	cout << "TVHamProbsSize()=" << TVHamProbs.size() << endl;
+	for (size_t i = 0; i < TVHamProbs.size(); ++i) {
+		cout << "|" << TVHamProbs[i] << "|";
+	}cout << endl;
+	cout << "TVSpamProbsSize()=" << TVSpamProbs.size() << endl;
+	for (size_t i = 0; i < TVSpamProbs.size(); ++i) {
+		cout << "|" << TVSpamProbs[i] << "|";
+	}cout << endl;
+
+
+	Plaintext plain_ham, plain_spam;
+	encoder.encode(TVHamProbs, plain_ham);
+	encoder.encode(TVSpamProbs, plain_spam);
+	Ciphertext query_ham, query_spam;
+	evaluator.multiply_plain(encrypted_query, plain_ham, query_ham);
+	evaluator.multiply_plain(encrypted_query, plain_spam, query_spam);
+
+	// Secure sum for Ham
+	Ciphertext sum_ham = query_ham;
+	int ham_size = static_cast<int>(TVHamProbs.size());
+	for (int i = 0; (1 << i) < ham_size; ++i) {
+		Ciphertext rotated;
+		evaluator.rotate_rows(sum_ham, 1 << i, galois_keys, rotated);
+		evaluator.add_inplace(sum_ham, rotated);
+	}
+
+	// Secure sum for Spam
+	Ciphertext sum_spam = query_spam;
+	int spam_size = static_cast<int>(TVSpamProbs.size());
+	for (int i = 0; (1 << i) < spam_size; ++i) {
+		Ciphertext rotated;
+		evaluator.rotate_rows(sum_spam, 1 << i, galois_keys, rotated);
+		evaluator.add_inplace(sum_spam, rotated);
+	}
+
+	Ciphertext diff;
+	evaluator.sub(sum_ham, sum_spam, diff);
+	return diff;
+
+}
+
+vector<int64_t> MultinomialNB_Email::getTVHamProbs() {
+	vector<int64_t> TVHamProbs;
+	ifstream ham_probs_in("TVHamProbs.txt");
+	if (ham_probs_in.is_open()) {
+		int64_t val;
+		while (ham_probs_in >> val) {
+			TVHamProbs.push_back(val);
+		}
+		ham_probs_in.close();
+	} else {
+		cerr << "Error: Unable to open TVHamProbs.txt for reading." << endl;
+	}
+	return TVHamProbs;
+}
+
+vector<int64_t> MultinomialNB_Email::getTVSpamProbs() {
+	vector<int64_t> TVSpamProbs;
+	ifstream spam_probs_in("TVSpamProbs.txt");
+	if (spam_probs_in.is_open()) {
+		int64_t val;
+		while (spam_probs_in >> val) {
+			TVSpamProbs.push_back(val);
+		}
+		spam_probs_in.close();
+	} else {
+		cerr << "Error: Unable to open TVSpamProbs.txt for reading." << endl;
+	}
+	return TVSpamProbs;
 }

@@ -35,7 +35,7 @@ public:
         EncryptionParameters parms(scheme_type::BFV);
         parms.set_poly_modulus_degree(polyModulus);
         parms.set_coeff_modulus(DefaultParams::coeff_modulus_128(polyModulus));
-        parms.set_plain_modulus(10 * polyModulus + 1);
+        parms.set_plain_modulus(65537);
         context = SEALContext::Create(parms);
         print_parameters(context);
         auto qualifiers = context->context_data()->qualifiers();
@@ -73,16 +73,23 @@ public:
         }
         infile.close();
         query[0] = 1;
-        vector<uint64_t> duplicatedQuery = query;
-        query.insert(query.end(), duplicatedQuery.begin(), duplicatedQuery.end());
 
-        cout << "Query vector: "; for (const auto &q : query) cout << q << " "; cout << endl;
 
+        //? debug
+        query.resize(selectedFeatures.size(), 0ULL);
+        query[0] = 1;
+        for (size_t i = 1; i < query.size(); ++i) {
+            query[i] = i;
+        }
+        cout << "Query vector size: " << query.size() << endl;
+
+        cout << "Query vector: ";
+        for (const auto &q : query) cout << "|"<< q << "|"; cout << endl;
+        
         // resize
         size_t slot_count = batch_encoder->slot_count();
         if (query.size() < slot_count){
             query.resize(slot_count, 0ULL);
-            cout << "Query vector resized to fit slot count: " << slot_count << endl;
         }
         // Encode
         Plaintext plain_query;
@@ -118,6 +125,26 @@ public:
         // cout << endl;
         
     };
+
+    void decryptResult(Ciphertext processedQuery){
+        Plaintext plain_result;
+        decryptor->decrypt(processedQuery, plain_result);
+
+        vector<uint64_t> result;
+        batch_encoder->decode(plain_result, result);
+
+        uint64_t val = result[0];
+        cout << "Decrypted value: " << val << endl;
+        int modulus = context->context_data()->parms().plain_modulus().value();
+        if (val > modulus / 2)
+        {
+            cout << "Spam\n";
+        }
+        else
+        {
+            cout << "Ham\n";
+        }
+    }
 
 private:
     vector<string> mail_words;

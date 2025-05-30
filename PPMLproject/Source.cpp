@@ -50,7 +50,7 @@ int main1()
 
 	// create query for all dataset
 	cout << endl << "CLASSIFICATION ON ENRON5" << endl;
-	MNB_Email.classify(path);
+	MNB_Email.classifyPlain(path);
 
 	vector<vector<int>> confusionMatrix;
 	MNB_Email.getConfusionMatrix(confusionMatrix);
@@ -65,7 +65,9 @@ int main1()
 
 int main_client()
 {
+		// int polyModulus = 16384;
 	int polyModulus = 4096;
+	int m = 16;
 
 	cout << "Starting Client..." << endl;
 	Client client = Client();
@@ -76,6 +78,8 @@ int main_client()
 
 	cout << "getting selected features vector..." << endl;
 	MNBE.loadSelectedFeatures();
+	vector<string> selectedFeatures;
+	MNBE.getSelectedFeatures(selectedFeatures);
 
 	cout << "loading model..." << endl;
 	MNBE.loadModel();
@@ -83,10 +87,17 @@ int main_client()
 
 	cout << "creating query according to selected features..." << endl;
 	string filename = "test_data/testSpam.txt";
-	cout <<  MNBE.Query(filename) << endl;
+	// string filename = "test_data/testHam.txt";
+	
+	Ciphertext query = client.createQueryAccordingToSelectedFeauters(polyModulus, filename, selectedFeatures);
+	cout << "Query created successfully." << endl;
+	
+	cout << "Doing homomorphic operations now.." << endl;
+	Ciphertext processedQuery = MNBE.evaluateEncryptedQuery(query, *client.evaluator, *client.batch_encoder, client.gal_keys, client.relin_keys);
 
-	//TODO : create 
-
+	cout << "Query processed successfully." << endl;
+	cout << "Decrypting result..." << endl;
+	client.decryptResult(processedQuery);
 
 	cout << endl << endl << endl;
 	return 0;
@@ -99,7 +110,7 @@ int main_train(){
 	// int m = 2047;
 	int m = 16;
 	// int polyModulus = 16384;
-	int polyModulus = 4096;
+	int polyModulus = 1024;
 	long long int timeElapsed = 0;
 
 	MultinomialNB_Email MNB_Email = MultinomialNB_Email(path, m, timeElapsed);

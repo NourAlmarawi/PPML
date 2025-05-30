@@ -43,13 +43,16 @@ class MultinomialNB_Email
 		void getConfusionMatrix(vector<vector<int>> &confusionMatrixOutput);
 		vector<long double> secureSum(vector<long double> &multiplied_query);
 		void createSingleQuery(string filename);
-        bool Query(string filename);
-        void classify(string path);
+        bool queryPlain(string filename);
+        void classifyPlain(string path);
 		void saveModel();
 		void loadModel();
 		void saveSelectedFeatures();
 		void loadSelectedFeatures();
-		Ciphertext evaluateEncryptedQuery(Ciphertext &encrypted_query, Evaluator &evaluator, BatchEncoder &encoder, GaloisKeys &galois_keys);
+		vector<int64_t> getTVHamProbs();
+		vector<int64_t> getTVSpamProbs();
+		Ciphertext evaluateEncryptedQuery(Ciphertext &encrypted_query, Evaluator &evaluator, BatchEncoder &encoder, GaloisKeys &galois_keys, RelinKeys &relin_keys);
+		Ciphertext encryptedSecureSum(Ciphertext &encrypted_query, Evaluator &evaluator, BatchEncoder &encoder, GaloisKeys &galois_keys, RelinKeys &relin_keys);
 
 	
 	private:
