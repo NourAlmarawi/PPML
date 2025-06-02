@@ -1,6 +1,5 @@
 #include <cmath>
 #include <iostream>
-#include <iostream>
 #include <fstream> // for ifstream
 #include <cctype>  // for tolower(), isalpha()
 #include <string>
@@ -35,7 +34,18 @@ public:
         EncryptionParameters parms(scheme_type::BFV);
         parms.set_poly_modulus_degree(polyModulus);
         parms.set_coeff_modulus(DefaultParams::coeff_modulus_128(polyModulus));
-        parms.set_plain_modulus(65537);
+        if (polyModulus == 4096)
+        {
+            parms.set_plain_modulus(65537);
+        }
+        else if (polyModulus == 16384)
+        {
+            parms.set_plain_modulus(65537);
+        }
+        else
+        {
+            parms.set_plain_modulus(65537);
+        }
         context = SEALContext::Create(parms);
         print_parameters(context);
         auto qualifiers = context->context_data()->qualifiers();
@@ -103,26 +113,6 @@ public:
         cout << "NB: " << decryptor->invariant_noise_budget(encrypted_query) << endl;
 
         return encrypted_query;
-
-        // // Example homomorphic operation: multiply the query by 2
-        // Plaintext plain_two;
-        // batch_encoder->encode(vector<uint64_t>(slot_count, 2), plain_two);
-        // evaluator->multiply_plain_inplace(encrypted_query, plain_two);
-
-        // // Decrypt the result
-        // Plaintext plain_result;
-        // decryptor->decrypt(encrypted_query, plain_result);
-
-        // // Decode the result
-        // vector<uint64_t> result;
-        // batch_encoder->decode(plain_result, result);
-
-        // // Print the first part of the result (original query size)
-        // cout << "Decrypted result (query * 2): ";
-        // for (size_t i = 0; i < query.size(); ++i) {
-        //     cout << result[i] << " ";
-        // }
-        // cout << endl;
         
     };
 
@@ -146,8 +136,7 @@ public:
         }
     }
 
-private:
-    vector<string> mail_words;
+private:    
 
     void print_parameters(shared_ptr<SEALContext> context)
     {

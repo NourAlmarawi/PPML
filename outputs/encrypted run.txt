@@ -1,0 +1,78 @@
+Choose an option:
+1. Run Full code MultinomialNB_Email
+2. Run Client
+3. Train MNBE and save
+0. Exit
+2
+Starting Client...
+/ Encryption parameters:
+| poly_modulus_degree: 4096
+| coeff_modulus size: 109 bits
+| plain_modulus: 65537
+\ noise_standard_deviation: 3.2
+
+Batching enabled: true
+SEAL initialized successfully
+Starting MultinomialNB_Email...
+getting selected features vector...
+Selected Features loaded from selected_features.txt
+loading model...
+Final model loaded from final_model.txt
+MultinomialNB_Email loaded successfully.
+creating query according to selected features...
+Query vector size: 17
+Query vector: |1||1||2||3||4||5||6||7||8||9||10||11||12||13||14||15||16|
+Query encrypted successfully
+Encrypted query size: 2
+NB: 79
+Query created successfully.
+Doing homomorphic operations now..
+TVHamProbsSize()=17
+|18||19||20||21||22||23||24||25||26||27||28||29||30||31||32||33||34|
+TVSpamProbsSize()=17
+|1||2||3||4||5||6||7||8||9||10||11||12||13||14||15||16||17|
+Query processed successfully.
+Decrypting result...
+Decrypted value: 2329
+Ham
+
+
+
+
+Choose an option:
+1. Run Full code MultinomialNB_Email
+2. Run Client
+3. Train MNBE and save
+0. Exit
+2
+Starting Client...
+/ Encryption parameters:
+| poly_modulus_degree: 4096
+| coeff_modulus size: 109 bits
+| plain_modulus: 65537
+\ noise_standard_deviation: 3.2
+
+Batching enabled: true
+SEAL initialized successfully
+Starting MultinomialNB_Email...
+getting selected features vector...
+Selected Features loaded from selected_features.txt
+loading model...
+Final model loaded from final_model.txt
+MultinomialNB_Email loaded successfully.
+creating query according to selected features...
+Query vector size: 17
+Query vector: |1||1||2||3||4||5||6||7||8||9||10||11||12||13||14||15||16|
+Query encrypted successfully
+Encrypted query size: 2
+NB: 79
+Query created successfully.
+Doing homomorphic operations now..
+TVHamProbsSize()=17
+|1||2||3||4||5||6||7||8||9||10||11||12||13||14||15||16||17|
+TVSpamProbsSize()=17
+|18||19||20||21||22||23||24||25||26||27||28||29||30||31||32||33||34|
+Query processed successfully.
+Decrypting result...
+Decrypted value: 63208
+Spam

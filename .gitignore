@@ -4,5 +4,6 @@ MultinomialNB_Email_original.cpp
 .vscode/
 .vs
 debug
+release
 *.vcxproj*
 seal

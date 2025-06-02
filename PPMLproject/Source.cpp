@@ -1,5 +1,4 @@
 #include <time.h>
-#include "MultinomialNB_Email.h"
 #include <cmath>
 #include <iostream>
 #include <iomanip>
@@ -10,6 +9,7 @@
 #include <chrono>
 #include <experimental/filesystem>
 #include "seal/seal.h"
+#include "MultinomialNB_Email.cpp"
 #include "Client.cpp"
 namespace fs = std::experimental;
 using std::vector;
@@ -39,16 +39,13 @@ int main1()
 	MNB_Email.saveSelectedFeatures();
 	MNB_Email.saveModel();
 
-	MNB_Email.loadModel();
+	// MNB_Email.loadModel();
 
 	vector<string> restoredSelectedFeatures;
 	MNB_Email.loadSelectedFeatures();
 
-	// create single query
-	string filename = "test_data/test_file.txt";
-	MNB_Email.createSingleQuery(filename);
+	// MNB_Email.queryPlain("test_data/testSpam.txt");
 
-	// create query for all dataset
 	cout << endl << "CLASSIFICATION ON ENRON5" << endl;
 	MNB_Email.classifyPlain(path);
 
@@ -65,7 +62,7 @@ int main1()
 
 int main_client()
 {
-		// int polyModulus = 16384;
+	// int polyModulus = 16384;
 	int polyModulus = 4096;
 	int m = 16;
 
@@ -81,8 +78,8 @@ int main_client()
 	vector<string> selectedFeatures;
 	MNBE.getSelectedFeatures(selectedFeatures);
 
-	cout << "loading model..." << endl;
-	MNBE.loadModel();
+	// cout << "loading model..." << endl;
+	// MNBE.loadModel();
 	cout << "MultinomialNB_Email loaded successfully." << endl;
 
 	cout << "creating query according to selected features..." << endl;
@@ -116,13 +113,14 @@ int main_train(){
 	MultinomialNB_Email MNB_Email = MultinomialNB_Email(path, m, timeElapsed);
 	MNB_Email.train(timeElapsed);
 	
-	vector<long double> trainingVector(polyModulus, 0.0);
-	MNB_Email.getTrainingVector(trainingVector, polyModulus);
-	vector<string> selectedFeatures;
-	MNB_Email.getSelectedFeatures(selectedFeatures);
-
+	// vector<long double> trainingVector(polyModulus, 0.0);
+	// MNB_Email.getTrainingVector(trainingVector, polyModulus);
+	// vector<string> selectedFeatures;
+	// MNB_Email.getSelectedFeatures(selectedFeatures);
+	// MNB_Email.saveModel();
+	
+	MNB_Email.saveTrainingVectors(polyModulus);
 	MNB_Email.saveSelectedFeatures();
-	MNB_Email.saveModel();
 
 	//? debug
 	// vector<string> restoredSelectedFeatures;
@@ -170,5 +168,6 @@ int main()
 			break;
 		}
 		cout << endl;
+		
 	}
 }
