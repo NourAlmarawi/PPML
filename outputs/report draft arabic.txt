@@ -1,0 +1,99 @@
+____________________________
+MultinomialNB_Email Class
+____________________________
+
+
+
+------------------- MultinomialNB_Email() constructor -------------------
+بيعمل initialize عن طريق انه بيقرأ الداتاسيت وبيعد الكلمات وبيخزن الفريكوينسيات تبعها بالفيكتورات التالية
+wordsGlobalVector
+فيكتور فيه كل الكلمات بالداتاسيت
+hamWordsFreq
+فيكتور فيه فريكوينسيات هالكلمات بالهام
+spamWordsFreq
+فيكتور فيه فريكوينسيات هالكلمات بالسبام
+hamWordsInDocumentsCount
+عدد الملفات الهام يلي فيها هالكلمة
+spamWordsInDocumentsCount
+عدد الملفات السبام يلي فيهم هالكلمة
+كل هالفيكتورات الindex تبعها متطابق يعني كمثال الكلمة n بفيكتور wordsGlobalVector، بالخانة n من الفيكتور hamWordsFreq منعرف كم *مرة* مذكورة بالملفات الهام، والخانة n من الفيكتور hamWordsInDocumentsCount منعرف عدد ال*ملفات* يلي مذكورة فيها
+كل الفيكتورات الخانة 0 منها محجوزة مسبقاً ويبدأ العد من الخانة 1
+
+------------------- train -------------------
+
+اخر رسالة بهي الشات فيها معادلات رياضية
+https://chatgpt.com/share/683ca402-f660-800f-bddb-5a271c5a1c9a
+
+بعدها بتتخزن بالفيكتورات selectedFeatures و logOfProbWordIsHam و logOfProbWordIsSpam بالقيم المناسبة 
+وكمان بتتخزن قيمة logProbHam و logProbSpam اللي هنن احتمالية انه الإيميل كله هام او سبام
+
+------------------- saveTrainingVectors -------------------
+
+ينشئ فيكتورين جديدين هم TVHamProbs و TVSpamProbs
+الخانة 0 منهما هي logProbHam و  logProbSpam
+وباقي الفيكتورين هنن logOfProbWordIsHam و logOfProbWordIsSpam
+بيحتفظ فيهم على شكل ملفين .txt ليتم استخدامهم بالclassification، بهي الطريقة التدريب بيتم مرة واحدة فقط والفيكتور صالح للاستعمال دائماً مو كل مرة منعمل run
+
+---------------------------------------------------------
+saveSelectedFeatures()
+loadSelectedFeatures()
+الأول بيحتفظ بالselected features على شكل ملف .txt
+والثاني بيقرأه وبيخزنه بالmember تبع الكلاس ليتم استعماله بالclassification
+
+
+---------------------------- secureSum() -----------------------------
+بيعمل secure sum *بدون تشفير* عن طريق انه بياخذ الفيكتور
+عدد الخطوات log2(vector_size) بكل خطوة بيعمل نسخة من الفيكتور مع rotation بمقدار 2^i وبيجمعها مع الفيكتور
+النتيجة النهائية هي فيكتور بطول الأصلي، فيه كل الخانات تحتوي على مجموع ارقام الفيكتور الأصلي
+
+----------------------------- queryPlain(string filename) -----------------------------
+بيرجع 1 إذا الإيميل هام و0 إذا سبام
+بيشتغل *بدون تشفير*
+عن طريق انه بياخذ الملف بيقرأ الكلمات وبيشكل الكويري 
+
+----------------------------- classifyPlain() -----------------------------
+بيعمل الclassification بشكل غير مشغر على الداتاسيت كلها
+بيستخدم الفنكشن queryPlain() على كل ملف
+وبيخزن التصنيفات الصحيحة والخاطئة بconfusion matrix
+
+------------------------------------------------------------------
+والآن مع وحش المجرة العملاق✨✨✨
+Ciphertext evaluateEncryptedQuery(Ciphertext &encrypted_query, Evaluator &evaluator, BatchEncoder &encoder, GaloisKeys &galois_keys)
+بياخذ الكويري مشفرة وبيرجع نتيجة الحسابات
+بيضربها بTVHamProbs وTVSpamProbs كل وحدة على حدة بعملية ضرب مشفرة (homomorphic operation)
+بعدين بيطبق عليهم secure sum مشفر عن طريق rotation و addition مشفر كل وحدة على حدة
+بيطرح النتيجة تبع الspam من النتيجة تبع الham وبيرجع النتيجة المشفرة النهائية
+النتيجة رح تطلع اما عدد موجب أي انه احتمال انها ham أعلى وبالتالي هي ham
+أو عدد موجب أي العكس وأنها spam
+نظراً لانه seal بيستخدم الmodulus لهيك لا يوجد عدد سالب، وانما متمم للplain modulus
+
+
+
+
+
+____________________________
+Client CLass
+____________________________
+
+ initializeSEAL(int polyModulus)
+بيبدأ بإعداد البارامترات وإنشاء اوبجكت seal ولوازم التشفير من encryptor decryptor batch-encoder إلخ
+
+-----------------------------
+createQueryAccordingToSelectedFeauters(int polyModulus, const string &filename, vector<string> &selectedFeatures)
+
+بيرجع Ciphertext 
+بينشئ query بناءً عالselected features المعطاة عن طريق انه بيعد الكلمات بالإيميل المراد فحصه وحساب frequencies كلمات الfeatures 
+بيتخزنوا بفيكتور بدءاً من الخانة 1، أما الخانة 0 بتتخزن فيها القيمة "1" بشكل ثابت بغض النظر عن أي شي
+بينعمل encode و encryption للكويري، وبتترجع ككويري مشفرة
+
+-----------------------------
+decryptResult(Ciphertext processedQuery)
+بيفك تشفير النتيجة، بياخذ الخانة 0 من الفيكتور وبيشوف إذا سالبة أو موجبة
+نظراً لأنه seal ما عنده عدد سالب بسبب استخدامه للmod وانما متمم للعدد، فالنتيجة حتكون كالتالي:
+عدد موجب كبير، أي انه احتمال اكبر انه ham
+أو عدد موجب كبير جداً جداً جداً وقريب من الplain modulus وبالتالي هو سالب
+فالمقارنة:
+val > plain_modulus/2 ? spam : ham
+
+
+
