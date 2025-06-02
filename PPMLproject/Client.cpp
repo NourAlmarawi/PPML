@@ -127,8 +127,6 @@ public:
         }
     }
 
-private:    
-
     void print_parameters(shared_ptr<SEALContext> context)
     {
         if (!context)
@@ -155,36 +153,7 @@ private:
 
         cout << "\\ noise_standard_deviation: " << context_data.parms().noise_standard_deviation() << endl;
         cout << endl;
-    }
-
-    void print_matrix(const vector<uint64_t> &matrix, size_t row_size)
-    {
-        cout << endl;
-
-        size_t print_size = 5;
-
-        cout << "    [";
-        for (size_t i = 0; i < print_size; i++)
-        {
-            cout << setw(3) << matrix[i] << ",";
-        }
-        cout << setw(3) << " ...,";
-        for (size_t i = row_size - print_size; i < row_size; i++)
-        {
-            cout << setw(3) << matrix[i] << ((i != row_size - 1) ? "," : " ]\n");
-        }
-        cout << "    [";
-        for (size_t i = row_size; i < row_size + print_size; i++)
-        {
-            cout << setw(3) << matrix[i] << ",";
-        }
-        cout << setw(3) << " ...,";
-        for (size_t i = 2 * row_size - print_size; i < 2 * row_size; i++)
-        {
-            cout << setw(3) << matrix[i] << ((i != 2 * row_size - 1) ? "," : " ]\n");
-        }
-        cout << endl;
-    }
+    }    
 };
 
 #endif

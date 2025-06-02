@@ -112,7 +112,6 @@ public:
 
 			while (inputFile >> ANSIWord)
 			{
-				cout << ANSIWord << " ";
 				try{
 					preprocessWord(ANSIWord);
 					if (ANSIWord.empty()) continue;
@@ -205,7 +204,6 @@ public:
 
 			while (inputFile >> ANSIWord)
 			{
-				cout << ANSIWord << " ";
 				try{
 					preprocessWord(ANSIWord);
 					if (ANSIWord.empty()) continue;
@@ -615,18 +613,18 @@ public:
 		vector<pair<string, int>> test_dirs = {{"ham", 0}, {"spam", 1}};
 		for (const auto &dirinfo : test_dirs)
 		{
-			// TODO: progress bar function
-			// int total_files = 3675 + 1500;
-			// int processed_files = 0;
-			// auto print_progress = [&](int processed) {
-			// 	int percent = static_cast<int>(100.0 * processed / total_files);
-			// 	cout << "\rProgress: [";
-			// 	int barWidth = 50;
-			// 	int pos = percent * barWidth / 100;
-			// 	for (int i = 0; i < barWidth; ++i)
-			// 		cout << (i < pos ? '=' : ' ');
-			// 	cout << "] " << percent << "% (" << processed << "/" << total_files << ")" << flush;
-			// };
+			// progress bar
+			int total_files = std::distance(fs::filesystem::directory_iterator(path + "/" + dirinfo.first), fs::filesystem::directory_iterator());
+			int processed_files = 0;
+			auto print_progress = [&](int processed) {
+				int percent = static_cast<int>(100.0 * processed / total_files);
+				cout << "\rProgress: [";
+				int barWidth = 50;
+				int pos = percent * barWidth / 100;
+				for (int i = 0; i < barWidth; ++i)
+					cout << (i < pos ? '=' : ' ');
+				cout << "] " << percent << "% (" << processed << "/" << total_files << ")" << flush;
+			};
 
 			string dirpath = path + "/" + dirinfo.first;
 
