@@ -1,12 +1,11 @@
 
-Subject:
-.
+subject
 energy
 operations
 enron
 ena
-sally
 leadership
+sally
 cc
 team
 additional
@@ -15,3 +14,4 @@ role
 north
 beck
 rick
+causey

@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <experimental/filesystem>
 #include <numeric>
+#include <algorithm>
 #include "seal/seal.h"
 namespace fs = std::experimental;
 using std::vector;
@@ -31,11 +32,8 @@ private:
 	long double logProbSpam, logProbHam;
 	vector<long double> logOfProbWordIsHam, logOfProbWordIsSpam;
 
-	vector<long double> finalModel;
 	vector<int64_t> TVHamProbs, TVSpamProbs;
-	
-	string modelPath;
-	string selectedFeaturesPath;
+
 	vector<vector<int>> confusionMatrix{{0, 0}, {0, 0}};
 
 public:
@@ -50,6 +48,17 @@ public:
 		hamWordsFreq.push_back(0);
 	}
 	
+	void preprocessWord(string &word)
+	{
+		string cleaned;
+		for (char c : word) {
+			if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+				cleaned += (c >= 'A' && c <= 'Z') ? (c + 32) : c;
+			}
+		}
+		word = cleaned;
+	}
+
 	MultinomialNB_Email(string path, int mValue, long long int &timeElapsed)
 	{
 		m = mValue;
@@ -103,7 +112,16 @@ public:
 
 			while (inputFile >> ANSIWord)
 			{
-				//TODO: preprocess ANSIWord
+				cout << ANSIWord << " ";
+				try{
+					preprocessWord(ANSIWord);
+					if (ANSIWord.empty()) continue;
+				}
+				catch (const std::exception &e)
+				{
+					cerr << "Error processing word: " << ANSIWord << " in file: " << filename << ". Error: " << e.what() << endl;
+					// continue; // Skip this word and continue with the next
+				}
 
 				existsInList = false;
 				for (int i = 0; i < tmpLocalWords.size(); i++)
@@ -187,7 +205,16 @@ public:
 
 			while (inputFile >> ANSIWord)
 			{
-				//TODO: preprocess ANSIWord
+				cout << ANSIWord << " ";
+				try{
+					preprocessWord(ANSIWord);
+					if (ANSIWord.empty()) continue;
+				}
+				catch (const std::exception &e)
+				{
+					cerr << "Error processing word: " << ANSIWord << " in file: " << filename << ". Error: " << e.what() << endl;
+					// continue; // Skip this word and continue with the next
+				}
 
 				existsInList = false;
 				for (int i = 0; i < tmpLocalWords.size(); i++)
@@ -239,6 +266,15 @@ public:
 		timeElapsed = time_diff.count() / 1000;
 		cout << "In total we have " << wordsGlobalVector.size() << " words in this dataset" << endl;
 		cout << "The initialization was done in [" << time_diff.count() / 1000 << " ms]" << endl;
+
+		// //?debug preprocessing
+		// cout << "Words in global vector: " << endl;
+		// for (int i = 0; i < wordsGlobalVector.size(); i++)
+		// {
+		// 	cout << wordsGlobalVector[i] << " ";
+		// }
+		// cout << endl;
+
 	}
 	
 	void train(long long int &timeElapsed)
@@ -390,7 +426,6 @@ public:
 		TVSpamProbs[0] = logProbSpam * K;
 		for (int i = 1; i <= m ; i++)
 		{
-			cout << "i=" << i << " logOfProbWordIsHam[i]=" << logOfProbWordIsHam[i] << " logOfProbWordIsSpam[i]=" << logOfProbWordIsSpam[i] << endl;
 			TVHamProbs[i] = static_cast<int64_t>(logOfProbWordIsHam[i] * K);
 			TVSpamProbs[i] = static_cast<int64_t>(logOfProbWordIsSpam[i] * K);
 		}
@@ -430,25 +465,82 @@ public:
 
 	}
 
-	void getTrainingVector(vector<long double> &trainingVector, int polyModulus)
+	void loadTrainingVectors()
 	{
-		finalModel.resize(polyModulus, 0);
-		// cout << "logOfProbWordIsHam.size()=" << logOfProbWordIsHam.size() << endl;
-		// cout << "logOfProbWordIsSpam.size()=" << logOfProbWordIsSpam.size() << endl;
-		finalModel[0] = logProbHam;
-		finalModel[m + 1] = logProbSpam;
-		// finalModel[0] = 999; //? debug
-		// finalModel[m + 1] = 999; //? debug
-		for (int i = 1; i <= m; i++)
+		ifstream ham_probs_in("TVHamProbs.txt");
+		if (ham_probs_in.is_open())
 		{
-			finalModel[i] = logOfProbWordIsHam[i];
-			finalModel[m + 1 + i] = logOfProbWordIsSpam[i];
-			// finalModel[i] = 555; //? debug
-			// finalModel[m + 1 + i] = 222; //? debug
+			TVHamProbs.clear();
+			int64_t val;
+			while (ham_probs_in >> val)
+			{
+				TVHamProbs.push_back(val);
+			}
+			ham_probs_in.close();
+			cout << "TVHamProbs loaded from TVHamProbs.txt" << endl;
 		}
-		// trainingVector = finalModel;
+		else
+		{
+			cerr << "Error: Unable to open TVHamProbs.txt for reading." << endl;
+		}
 
+		ifstream spam_probs_in("TVSpamProbs.txt");
+		if (spam_probs_in.is_open())
+		{
+			TVSpamProbs.clear();
+			int64_t val;
+			while (spam_probs_in >> val)
+			{
+				TVSpamProbs.push_back(val);
+			}
+			spam_probs_in.close();
+			cout << "TVSpamProbs loaded from TVSpamProbs.txt" << endl;
+		}
+		else
+		{
+			cerr << "Error: Unable to open TVSpamProbs.txt for reading." << endl;
+		}
 		
+	}
+
+	void saveSelectedFeatures()
+	{
+		ofstream selected_features_out("selected_features.txt");
+		if (selected_features_out.is_open())
+		{
+			selected_features_out << setprecision(10);
+			for (const auto &val : selectedFeatures)
+			{
+				selected_features_out << val << "\n";
+			}
+			selected_features_out.close();
+			cout << "Selected Features saved to selected_features.txt" << endl;
+		}
+		else
+		{
+			cerr << "Error: Unable to open file for saving the selected features." << endl;
+		}
+	}
+	
+	void loadSelectedFeatures()
+	{
+		ifstream selected_features_input("selected_features.txt");
+		if (selected_features_input.is_open())
+		{
+			selectedFeatures.clear();
+			selectedFeatures.push_back("");
+			string val;
+			while (selected_features_input >> val)
+			{
+				selectedFeatures.push_back(val);
+			}
+			selected_features_input.close();
+			cout << "Selected Features loaded from selected_features.txt" << endl;
+		}
+		else
+		{
+			cerr << "Error: Unable to open file for loading the selected features." << endl;
+		}
 	}
 	
 	void getConfusionMatrix(vector<vector<int>> &confusionMatrixOutput)
@@ -456,41 +548,18 @@ public:
 		confusionMatrixOutput = confusionMatrix;
 	}
 	
-	vector<long double> secureSum(vector<long double> &multiplied_query)
+	vector<int> secureSum(vector<int> &multiplied_query)
 	{
-		int m = multiplied_query.size() / 2 - 1;
-		int n = static_cast<int>(log2(m + 1));
-		vector<long double> temp = multiplied_query;
-
-		// Sum first half (0 to m)
-		vector<long double> first_half(temp.begin(), temp.begin() + m + 1);
-		vector<long double> first_sum = first_half;
-		for (int i = 0; i < n; ++i)
+		vector<int> result = multiplied_query;
+		int n = static_cast<int>(log2(result.size()));
+		for (int i = 0; (1 << i) < result.size(); ++i)
 		{
-			vector<long double> rotated = first_sum;
+			vector<int> rotated = result;
 			rotate(rotated.begin(), rotated.begin() + (1 << i), rotated.end());
-			for (size_t idx = 0; idx < first_sum.size(); ++idx)
-				first_sum[idx] += rotated[idx];
+			for (size_t idx = 0; idx < result.size(); ++idx)
+				result[idx] += rotated[idx];
 		}
-
-		// Sum second half (m+1 to end)
-		vector<long double> second_half(temp.begin() + m + 1, temp.end());
-		vector<long double> second_sum = second_half;
-		for (int i = 0; i < n; ++i)
-		{
-			vector<long double> rotated = second_sum;
-			rotate(rotated.begin(), rotated.begin() + (1 << i), rotated.end());
-			for (size_t idx = 0; idx < second_sum.size(); ++idx)
-				second_sum[idx] += rotated[idx];
-		}
-
-		// Combine results
-		vector<long double> result = temp;
-		for (int i = 0; i <= m; ++i)
-			result[i] = first_sum[i];
-		for (int i = 0; i < second_sum.size(); ++i)
-			result[m + 1 + i] = second_sum[i];
-
+		
 		return result;
 	}
 	
@@ -518,17 +587,18 @@ public:
 		infile.close();
 
 		query[0] = 1;
+		vector<int> query_ham = query, query_spam = query;
+		
+		for (size_t i = 0; i < query.size() && i < TVHamProbs.size() && TVSpamProbs.size(); ++i){
+			query_ham[i] = query_ham[i] * TVHamProbs[i];
+			query_spam[i] = query_spam[i] * TVSpamProbs[i];
+		}
+			
+		vector<int> sum_ham = secureSum(query_ham);
+		vector<int> sum_spam = secureSum(query_spam);
 
-		vector<int> duplicatedQuery = query;
-		query.insert(query.end(), duplicatedQuery.begin(), duplicatedQuery.end());
 
-		vector<long double> query_multiplied(query.size(), 0.0);
-		for (size_t i = 0; i < query.size() && i < finalModel.size(); ++i)
-			query_multiplied[i] = query[i] * finalModel[i];
-
-		vector<long double> summed_query = secureSum(query_multiplied);
-
-		if (summed_query[0] > summed_query[m + 1])
+		if (sum_ham[0] > sum_spam[0])
 		{
 			return true; // classified as HAM
 		}
@@ -594,178 +664,23 @@ public:
 		}
 	}
 	
-	void saveModel()
-	{
-		// ofstream model_out(modelPath.empty() ? "final_model.txt" : modelPath);
-		// if (model_out.is_open())
-		// {
-		// 	model_out << setprecision(10);
-		// 	for (const auto &val : finalModel)
-		// 	{
-		// 		model_out << val << "\n";
-		// 	}
-		// 	model_out.close();
-		// 	cout << "Final model saved to final_model.txt" << endl;
-		// }
-		// else
-		// {
-		// 	cerr << "Error: Unable to open file for saving the model." << endl;
-		// }
-
-		ofstream ham_probs_out("TVHamProbs.txt");
-		if (ham_probs_out.is_open())
-		{
-			int K = 8;
-			for (int i = 0; i <= m && i < finalModel.size(); ++i)
-			{
-				ham_probs_out << static_cast<int64_t>(finalModel[i] * K) << "\n";
-			}
-			ham_probs_out.close();
-			cout << "TVHamProbs saved to TVHamProbs.txt" << endl;
-		}
-		else
-		{
-			cerr << "Error: Unable to open TVHamProbs.txt for writing." << endl;
-		}
-
-		ofstream spam_probs_out("TVSpamProbs.txt");
-		if (spam_probs_out.is_open())
-		{
-			int K = 8;
-			for (int i = m + 1; i <= 2 * m + 1 && i < finalModel.size(); ++i)
-			{
-				spam_probs_out << static_cast<int64_t>(finalModel[i] * K) << "\n";
-			}
-			spam_probs_out.close();
-			cout << "TVSpamProbs saved to TVSpamProbs.txt" << endl;
-		}
-		else
-		{
-			cerr << "Error: Unable to open TVSpamProbs.txt for writing." << endl;
-		}
-	}
-	
-	// void loadModel()
-	// {
-	// 	ifstream model_in(modelPath.empty() ? "final_model.txt" : modelPath);
-	// 	if (model_in.is_open())
-	// 	{
-	// 		finalModel.clear();
-	// 		long double val;
-	// 		while (model_in >> val)
-	// 		{
-	// 			finalModel.push_back(val);
-	// 		}
-	// 		model_in.close();
-	// 		cout << "Final model loaded from final_model.txt" << endl;
-	// 	}
-	// 	else
-	// 	{
-	// 		cerr << "Error: Unable to open file for loading the model." << endl;
-	// 	}
-	// }
-
-
-
-	void saveSelectedFeatures()
-	{
-		ofstream selected_features_out(selectedFeaturesPath.empty() ? "selected_features.txt" : selectedFeaturesPath);
-		if (selected_features_out.is_open())
-		{
-			selected_features_out << setprecision(10);
-			for (const auto &val : selectedFeatures)
-			{
-				selected_features_out << val << "\n";
-			}
-			selected_features_out.close();
-			cout << "Selected Features saved to selected_features.txt" << endl;
-		}
-		else
-		{
-			cerr << "Error: Unable to open file for saving the selected features." << endl;
-		}
-	}
-	
-	void loadSelectedFeatures()
-	{
-		ifstream selected_features_input(selectedFeaturesPath.empty() ? "selected_features.txt" : selectedFeaturesPath);
-		if (selected_features_input.is_open())
-		{
-			selectedFeatures.clear();
-			selectedFeatures.push_back("");
-			string val;
-			while (selected_features_input >> val)
-			{
-				selectedFeatures.push_back(val);
-			}
-			selected_features_input.close();
-			cout << "Selected Features loaded from selected_features.txt" << endl;
-		}
-		else
-		{
-			cerr << "Error: Unable to open file for loading the selected features." << endl;
-		}
-	}
-	
-	vector<int64_t> getTVHamProbs()
-	{
-		vector<int64_t> TVHamProbs;
-		ifstream ham_probs_in("TVHamProbs.txt");
-		if (ham_probs_in.is_open())
-		{
-			int64_t val;
-			while (ham_probs_in >> val)
-			{
-				TVHamProbs.push_back(val);
-			}
-			ham_probs_in.close();
-		}
-		else
-		{
-			cerr << "Error: Unable to open TVHamProbs.txt for reading." << endl;
-		}
-		return TVHamProbs;
-	}
-	
-	vector<int64_t> getTVSpamProbs()
-	{
-		vector<int64_t> TVSpamProbs;
-		ifstream spam_probs_in("TVSpamProbs.txt");
-		if (spam_probs_in.is_open())
-		{
-			int64_t val;
-			while (spam_probs_in >> val)
-			{
-				TVSpamProbs.push_back(val);
-			}
-			spam_probs_in.close();
-		}
-		else
-		{
-			cerr << "Error: Unable to open TVSpamProbs.txt for reading." << endl;
-		}
-		return TVSpamProbs;
-	}
-	
-	Ciphertext evaluateEncryptedQuery(Ciphertext &encrypted_query, Evaluator &evaluator, BatchEncoder &encoder, GaloisKeys &galois_keys, RelinKeys &relin_keys)
+	Ciphertext evaluateEncryptedQuery(Ciphertext &encrypted_query, Evaluator &evaluator, BatchEncoder &encoder, GaloisKeys &galois_keys)
 	{
 		Ciphertext result = encrypted_query;
-		vector<int64_t> TVHamProbs = getTVHamProbs();
-		vector<int64_t> TVSpamProbs = getTVSpamProbs();
 
-		//? debug
-		cout << "TVHamProbsSize()=" << TVHamProbs.size() << endl;
-		for (size_t i = 0; i < TVHamProbs.size(); ++i)
-		{
-			cout << "|" << TVHamProbs[i] << "|";
-		}
-		cout << endl;
-		cout << "TVSpamProbsSize()=" << TVSpamProbs.size() << endl;
-		for (size_t i = 0; i < TVSpamProbs.size(); ++i)
-		{
-			cout << "|" << TVSpamProbs[i] << "|";
-		}
-		cout << endl;
+		// //? debug
+		// cout << "TVHamProbsSize()=" << TVHamProbs.size() << endl;
+		// for (size_t i = 0; i < TVHamProbs.size(); ++i)
+		// {
+		// 	cout << "|" << TVHamProbs[i] << "|";
+		// }
+		// cout << endl;
+		// cout << "TVSpamProbsSize()=" << TVSpamProbs.size() << endl;
+		// for (size_t i = 0; i < TVSpamProbs.size(); ++i)
+		// {
+		// 	cout << "|" << TVSpamProbs[i] << "|";
+		// }
+		// cout << endl;
 
 		Plaintext plain_ham, plain_spam;
 		encoder.encode(TVHamProbs, plain_ham);

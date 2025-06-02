@@ -84,15 +84,6 @@ public:
         infile.close();
         query[0] = 1;
 
-
-        //? debug
-        query.resize(selectedFeatures.size(), 0ULL);
-        query[0] = 1;
-        for (size_t i = 1; i < query.size(); ++i) {
-            query[i] = i;
-        }
-        cout << "Query vector size: " << query.size() << endl;
-
         cout << "Query vector: ";
         for (const auto &q : query) cout << "|"<< q << "|"; cout << endl;
         
