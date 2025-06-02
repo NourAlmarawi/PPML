@@ -59,6 +59,168 @@ public:
 		word = cleaned;
 	}
 
+	void initializeDatast(string path, int mValue, long long int &timeElapsed){
+		// Open the CSV file
+		ifstream csv_file(path);
+		if (!csv_file.is_open()) {
+			cerr << "Error: Unable to open CSV file: " << path << endl;
+			return;
+		}
+
+		m = mValue;
+		wordsGlobalVector.clear();
+		spamWordsInDocumentsCount.clear();
+		hamWordsInDocumentsCount.clear();
+		spamWordsFreq.clear();
+		hamWordsFreq.clear();
+		wordsGlobalVector.push_back("");
+		spamWordsInDocumentsCount.push_back(0);
+		hamWordsInDocumentsCount.push_back(0);
+		spamWordsFreq.push_back(0);
+		hamWordsFreq.push_back(0);
+
+		chrono::high_resolution_clock::time_point time_start, time_end;
+		time_start = chrono::high_resolution_clock::now();
+
+		// Read header to find column indices
+		string header;
+		getline(csv_file, header);
+		vector<string> columns;
+		size_t pos = 0, prev = 0;
+		while ((pos = header.find(',', prev)) != string::npos) {
+			columns.push_back(header.substr(prev, pos - prev));
+			prev = pos + 1;
+		}
+		columns.push_back(header.substr(prev));
+		int body_idx = -1, label_idx = -1;
+		for (int i = 0; i < columns.size(); ++i) {
+			if (columns[i] == "Body") body_idx = i;
+			if (columns[i] == "Label") label_idx = i;
+		}
+		if (body_idx == -1 || label_idx == -1) {
+			cerr << "Error: CSV must contain 'Body' and 'Label' columns." << endl;
+			return;
+		}
+
+		// Count total lines for progress bar
+		int total_lines = 0;
+		{
+			ifstream count_file(path);
+			string tmp;
+			getline(count_file, tmp); // skip header
+			while (getline(count_file, tmp)) ++total_lines;
+		}
+		csv_file.clear();
+		csv_file.seekg(0);
+		getline(csv_file, header); // skip header
+
+		int processed = 0;
+		string line;
+		while (getline(csv_file, line)) {
+			++processed;
+			// Progress bar
+			int percent = (processed * 100) / total_lines;
+			cout << "\r[";
+			int barWidth = 50;
+			int pos = (percent * barWidth) / 100;
+			for (int i = 0; i < barWidth; ++i)
+				cout << (i < pos ? '=' : (i == pos ? '>' : ' '));
+			cout << "] " << percent << "% (" << processed << "/" << total_lines << ")" << flush;
+			if (processed == total_lines) cout << endl;
+
+			// Parse CSV line
+			vector<string> fields;
+			size_t p = 0, q = 0;
+			bool in_quotes = false;
+			string field;
+			while (q < line.size()) {
+				if (line[q] == '"' && (q == 0 || line[q - 1] != '\\')) in_quotes = !in_quotes;
+				else if (line[q] == ',' && !in_quotes) {
+					fields.push_back(field);
+					field.clear();
+				} else {
+					field += line[q];
+				}
+				++q;
+			}
+			fields.push_back(field);
+
+			if (fields.size() <= std::max(body_idx, label_idx)) continue;
+			string body = fields[body_idx];
+			string label = fields[label_idx];
+
+			// Tokenize body
+			istringstream iss(body);
+			string ANSIWord;
+			vector<string> tmpLocalWords;
+			vector<long long int> tmpLocalWordsInDoc;
+			vector<long long int> tmpLocalWordsFreq;
+			bool existsInList = false;
+			while (iss >> ANSIWord) {
+				try {
+					preprocessWord(ANSIWord);
+					if (ANSIWord.empty()) continue;
+				} catch (const std::exception &e) {
+					cerr << "Error processing word: " << ANSIWord << ". Error: " << e.what() << endl;
+				}
+				existsInList = false;
+				for (int i = 0; i < tmpLocalWords.size(); i++) {
+					if (ANSIWord == tmpLocalWords[i]) {
+						existsInList = true;
+						tmpLocalWordsFreq[i] += 1;
+						break;
+					}
+				}
+				if (!existsInList) {
+					tmpLocalWords.push_back(ANSIWord);
+					tmpLocalWordsInDoc.push_back(1);
+					tmpLocalWordsFreq.push_back(1);
+				}
+			}
+
+			// Update global vectors
+			bool is_spam = (label == "1");
+			for (int i = 0; i < tmpLocalWords.size(); i++) {
+				existsInList = false;
+				for (int j = 0; j < wordsGlobalVector.size(); j++) {
+					if (tmpLocalWords[i] == wordsGlobalVector[j]) {
+						existsInList = true;
+						if (is_spam) {
+							spamWordsInDocumentsCount[j]++;
+							spamWordsFreq[j] += tmpLocalWordsFreq[i];
+						} else {
+							hamWordsInDocumentsCount[j]++;
+							hamWordsFreq[j] += tmpLocalWordsFreq[i];
+						}
+						break;
+					}
+				}
+				if (!existsInList) {
+					wordsGlobalVector.push_back(tmpLocalWords[i]);
+					if (is_spam) {
+						spamWordsInDocumentsCount.push_back(1);
+						spamWordsFreq.push_back(tmpLocalWordsFreq[i]);
+						hamWordsInDocumentsCount.push_back(0);
+						hamWordsFreq.push_back(0);
+					} else {
+						hamWordsInDocumentsCount.push_back(1);
+						hamWordsFreq.push_back(tmpLocalWordsFreq[i]);
+						spamWordsInDocumentsCount.push_back(0);
+						spamWordsFreq.push_back(0);
+					}
+				}
+			}
+			if (is_spam) spamMails++;
+			else hamMails++;
+		}
+
+		time_end = chrono::high_resolution_clock::now();
+		auto time_diff = chrono::duration_cast<chrono::microseconds>(time_end - time_start);
+		timeElapsed = time_diff.count() / 1000;
+		cout << "In total we have " << wordsGlobalVector.size() << " words in this dataset" << endl;
+		cout << "The initialization was done in [" << timeElapsed << " ms]" << endl;
+	}
+	
 	MultinomialNB_Email(string path, int mValue, long long int &timeElapsed)
 	{
 		m = mValue;
@@ -606,7 +768,120 @@ public:
 		}
 	}
 	
-	void classifyPlain(string path)
+	void classifyPlain(string path){
+		// Confusion matrix counters
+		confusionMatrix = {{0, 0}, {0, 0}};
+		ifstream csv_file(path);
+		if (!csv_file.is_open()) {
+			cerr << "Error: Unable to open CSV file: " << path << endl;
+			return;
+		}
+
+		// Read header to find column indices
+		string header;
+		getline(csv_file, header);
+		vector<string> columns;
+		size_t pos = 0, prev = 0;
+		while ((pos = header.find(',', prev)) != string::npos) {
+			columns.push_back(header.substr(prev, pos - prev));
+			prev = pos + 1;
+		}
+		columns.push_back(header.substr(prev));
+		int body_idx = -1, label_idx = -1;
+		for (int i = 0; i < columns.size(); ++i) {
+			if (columns[i] == "Body") body_idx = i;
+			if (columns[i] == "Label") label_idx = i;
+		}
+		if (body_idx == -1 || label_idx == -1) {
+			cerr << "Error: CSV must contain 'Body' and 'Label' columns." << endl;
+			return;
+		}
+
+		// Count total lines for progress bar
+		int total_lines = 0;
+		{
+			ifstream count_file(path);
+			string tmp;
+			getline(count_file, tmp); // skip header
+			while (getline(count_file, tmp)) ++total_lines;
+		}
+		csv_file.clear();
+		csv_file.seekg(0);
+		getline(csv_file, header); // skip header
+
+		int processed = 0;
+		string line;
+		while (getline(csv_file, line)) {
+			++processed;
+			// Progress bar
+			int percent = (processed * 100) / total_lines;
+			cout << "\r[";
+			int barWidth = 50;
+			int pos = (percent * barWidth) / 100;
+			for (int i = 0; i < barWidth; ++i)
+				cout << (i < pos ? '=' : (i == pos ? '>' : ' '));
+			cout << "] " << percent << "% (" << processed << "/" << total_lines << ")" << flush;
+			if (processed == total_lines) cout << endl;
+
+			// Parse CSV line
+			vector<string> fields;
+			size_t p = 0, q = 0;
+			bool in_quotes = false;
+			string field;
+			while (q < line.size()) {
+				if (line[q] == '"' && (q == 0 || line[q - 1] != '\\')) in_quotes = !in_quotes;
+				else if (line[q] == ',' && !in_quotes) {
+					fields.push_back(field);
+					field.clear();
+				} else {
+					field += line[q];
+				}
+				++q;
+			}
+			fields.push_back(field);
+
+			if (fields.size() <= std::max(body_idx, label_idx)) continue;
+			string body = fields[body_idx];
+			string label = fields[label_idx];
+
+			// Tokenize body and build query vector
+			vector<int> query(selectedFeatures.size(), 0);
+			istringstream iss(body);
+			string word;
+			while (iss >> word) {
+				preprocessWord(word);
+				for (size_t i = 1; i < selectedFeatures.size(); ++i) {
+					if (word == selectedFeatures[i]) {
+						query[i]++;
+					}
+				}
+			}
+			query[0] = 1;
+			vector<int> query_ham = query, query_spam = query;
+			for (size_t i = 0; i < query.size() && i < TVHamProbs.size() && TVSpamProbs.size(); ++i) {
+				query_ham[i] = query_ham[i] * TVHamProbs[i];
+				query_spam[i] = query_spam[i] * TVSpamProbs[i];
+			}
+			vector<int> sum_ham = secureSum(query_ham);
+			vector<int> sum_spam = secureSum(query_spam);
+
+			bool is_ham = (sum_ham[0] > sum_spam[0]);
+			int actual = (label == "1") ? 1 : 0;
+			if (actual == 0) { // actual ham
+				if (is_ham)
+					confusionMatrix[0][0]++;
+				else
+					confusionMatrix[0][1]++;
+			} else { // actual spam
+				if (!is_ham)
+					confusionMatrix[1][1]++;
+				else
+					confusionMatrix[1][0]++;
+			}
+		}
+	}
+	
+	void classifyPlain_legacy(string path)
 	{
 		// Confusion matrix counters
 		int true_ham = 0, false_spam = 0, true_spam = 0, false_ham = 0;

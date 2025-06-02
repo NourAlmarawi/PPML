@@ -55,7 +55,50 @@ int main_client()
 	return 0;
 }
 
-int main_train(){
+int main_plain_train(){
+	string path = "enron5kSample.csv";
+	// string path = "enron_data.csv";
+	int m = 2047;
+	int polyModulus = 16384;
+	long long int timeElapsed = 0;
+
+	// train & save
+	MultinomialNB_Email MNB_Email = MultinomialNB_Email();
+	MNB_Email.initializeDatast(path, m, timeElapsed);
+	MNB_Email.train(timeElapsed);
+	MNB_Email.saveSelectedFeatures();
+	MNB_Email.saveTrainingVectors(polyModulus);
+
+	return 0;
+}
+
+int main_plain_classification(){
+	string path = "enron5kSample.csv";
+	// string path = "enron_data.csv";
+	int m = 2047;
+	int polyModulus = 16384;
+	long long int timeElapsed = 0;
+	MultinomialNB_Email MNB_Email = MultinomialNB_Email();
+	// classify plain
+	MNB_Email.loadSelectedFeatures();
+	vector<string> selectedFeatures;
+	MNB_Email.getSelectedFeatures(selectedFeatures);
+	MNB_Email.loadTrainingVectors();
+	cout << "Model loaded successfully." << endl;
+
+	cout << endl << "CLASSIFICATION ON ENRON5" << endl;
+	MNB_Email.classifyPlain(path);
+
+	vector<vector<int>> confusionMatrix;
+	MNB_Email.getConfusionMatrix(confusionMatrix);
+	cout << "\nConfusion Matrix:\n";
+	cout << "                Predicted HAM   Predicted SPAM\n";
+	cout << "Actual HAM   " << setw(10) << confusionMatrix[0][0] << setw(18) << confusionMatrix[0][1] << endl;
+	cout << "Actual SPAM  " << setw(10) << confusionMatrix[1][0] << setw(18) << confusionMatrix[1][1] << endl;
+	return 0;
+}
+
+int main_train_legacy(){
 	string path = "dataset_reduced";
 	int m = 2047;
 	int polyModulus = 16384;
@@ -68,7 +111,7 @@ int main_train(){
 	return 0;
 }
 
-int main_plain_classification()
+int main_plain_train_classification_legacy()
 {
 	string path = "dataset_reduced";
 	int m = 2047;
@@ -102,11 +145,13 @@ int main()
 	while (true)
 	{
 		int choice;
-		cout << "Update 2" << endl;
+		cout << "Update 4" << endl;
 		cout << "Choose an option:\n";
 		cout << "1. Run Client\n";
-		cout << "2. Train MNBE and save\n";
+		cout << "2. Run Training and save\n";
 		cout << "3. Run Plain Classification\n";
+		cout << "4. Run Plain Tarin & Classification (legacy)\n";
+		cout << "5. Train MNBE and save (legacy)\n";
 		cout << "0. Exit\n";
 		cin >> choice;
 
@@ -116,10 +161,16 @@ int main()
 			main_client();
 			break;
 		case 2:
-			main_train();
+			main_plain_train();
 			break;
 		case 3:
 			main_plain_classification();
+			break;
+		case 4:
+			main_train_legacy();
+			break;
+		case 5:
+			main_plain_train_classification_legacy();
 			break;
 		case 0:
 			return 0;

@@ -8,3 +8,5 @@ release
 *.vcxproj*
 seal
 outputs
+enron_data.csv
+enron5kSample.csv
