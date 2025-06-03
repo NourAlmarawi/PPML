@@ -54,7 +54,7 @@ PPMLproject/
 ## Files
 
 - `Client.cpp`: Client-side logic for encrypted queries.
-- `MultinomialNB_Email.cpp` / `.h`: Main classifier implementation.
+- `MultinomialNB_Email.cpp`: Main classifier implementation.
 - `selected_features.txt`: List of selected features (words) used for classification.
 - `test_data/`: Example emails for testing.
 - `outputs/`: Output files from runs and experiments.
@@ -63,5 +63,3 @@ PPMLproject/
 
 - [Microsoft SEAL](https://github.com/microsoft/SEAL)
 - Naive Bayes Classifier: [Wikipedia](https://en.wikipedia.org/wiki/Naive_Bayes_classifier)
-
-```

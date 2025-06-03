@@ -1,0 +1,5 @@
+base_dir = os.path.dirname(os.path.abspath(__file__))
+            classifier_path = os.path.join(base_dir, "PPMLproject.exe")
+            features_path = os.path.join(base_dir, "selected_features.txt")
+            TVHamProbs_path = os.path.join(base_dir, "TVHamProbs.txt")
+            TVSpamProbs_path = os.path.join(base_dir, "TVSpamProbs.txt")

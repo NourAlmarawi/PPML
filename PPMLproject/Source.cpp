@@ -23,19 +23,19 @@ int main_client()
 	int m = 2047;
 
 	cout << "Starting Client..." << endl;
-	Client client = Client();
+	Client client = Client(true);
 	client.initializeSEAL(polyModulus);
 
 	cout << "Starting MultinomialNB_Email..." << endl;
-	MultinomialNB_Email MNBE = MultinomialNB_Email();
+	MultinomialNB_Email MNBE = MultinomialNB_Email(false);
 
 	cout << "getting selected features vector..." << endl;
-	MNBE.loadSelectedFeatures();
+	MNBE.loadSelectedFeatures("selected_features.txt");
 	vector<string> selectedFeatures;
 	MNBE.getSelectedFeatures(selectedFeatures);
 
 	cout << "loading model..." << endl;
-	MNBE.loadTrainingVectors();
+	MNBE.loadTrainingVectors("TVHamProbs.txt", "TVSpamProbs.txt");
 	cout << "MultinomialNB_Email loaded successfully." << endl;
 
 	cout << "creating query according to selected features..." << endl;
@@ -50,7 +50,12 @@ int main_client()
 
 	cout << "Query processed successfully." << endl;
 	cout << "Decrypting result..." << endl;
-	client.decryptResult(processedQuery);
+	bool result = client.decryptResult(processedQuery);
+
+	if (result){
+		cout << "HAM";
+	}
+	else cout << "SPAM";
 
 	cout << endl << endl << endl;
 	return 0;
@@ -78,8 +83,8 @@ int main_plain_classification()
 
 	// train & save
 	MultinomialNB_Email MNB_Email = MultinomialNB_Email(path, m, timeElapsed);
-	MNB_Email.loadSelectedFeatures();
-	MNB_Email.loadTrainingVectors();
+	MNB_Email.loadSelectedFeatures("selected_features.txt");
+	MNB_Email.loadTrainingVectors("TVHamProbs.txt", "TVSpamProbs.txt");
 	// classify plain
 	vector<string> selectedFeatures;
 	MNB_Email.getSelectedFeatures(selectedFeatures);
@@ -96,7 +101,7 @@ int main_plain_classification()
 	return 0;
 }
 
-int main()
+int main_options()
 {
 	while (true)
 	{
@@ -129,4 +134,43 @@ int main()
 		cout << endl;
 		
 	}
+}
+
+int main(int argc, char* argv[])
+{
+    if (argc < 2) {
+        cerr << "Missing query file path." << endl;
+        return 1;
+    }
+
+    string filename = argv[1];
+	string features_path = argv[2];
+	string TVHamProbsPath = argv[3];
+	string TVSpamProbsPath = argv[4];
+
+    int polyModulus = 16384;
+    int m = 2047;
+
+    Client client = Client(false);
+    client.initializeSEAL(polyModulus);
+
+    MultinomialNB_Email MNBE = MultinomialNB_Email(false);
+    MNBE.loadSelectedFeatures(features_path);
+
+    vector<string> selectedFeatures;
+    MNBE.getSelectedFeatures(selectedFeatures);
+
+    MNBE.loadTrainingVectors(TVHamProbsPath, TVSpamProbsPath);
+
+    Ciphertext query = client.createQueryAccordingToSelectedFeauters(polyModulus, filename, selectedFeatures);
+    Ciphertext processedQuery = MNBE.evaluateEncryptedQuery(query, *client.evaluator, *client.batch_encoder, client.gal_keys);
+
+    bool result = client.decryptResult(processedQuery);
+
+	if (result){
+		cout << "HAM";
+	}
+	else cout << "SPAM";
+
+    return 0;
 }

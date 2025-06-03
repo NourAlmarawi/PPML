@@ -37,7 +37,9 @@ private:
 	vector<vector<int>> confusionMatrix{{0, 0}, {0, 0}};
 
 public:
-	MultinomialNB_Email()
+	bool debug = false;
+	
+	MultinomialNB_Email(bool debugMode)
 	{
 		spamMails = 0;
 		hamMails = 0;
@@ -46,6 +48,7 @@ public:
 		hamWordsInDocumentsCount.push_back(0);
 		spamWordsFreq.push_back(0);
 		hamWordsFreq.push_back(0);
+		debug = debugMode;
 	}
 	
 	void preprocessWord(string &word)
@@ -463,9 +466,9 @@ public:
 
 	}
 
-	void loadTrainingVectors()
+	void loadTrainingVectors(string TVHamProbsPath, string TVSpamProbsPath)
 	{
-		ifstream ham_probs_in("TVHamProbs.txt");
+		ifstream ham_probs_in(TVHamProbsPath);
 		if (ham_probs_in.is_open())
 		{
 			TVHamProbs.clear();
@@ -475,14 +478,14 @@ public:
 				TVHamProbs.push_back(val);
 			}
 			ham_probs_in.close();
-			cout << "TVHamProbs loaded from TVHamProbs.txt" << endl;
+			if (debug) cout << "TVHamProbs loaded from TVHamProbs.txt" << endl;
 		}
 		else
 		{
 			cerr << "Error: Unable to open TVHamProbs.txt for reading." << endl;
 		}
 
-		ifstream spam_probs_in("TVSpamProbs.txt");
+		ifstream spam_probs_in(TVSpamProbsPath);
 		if (spam_probs_in.is_open())
 		{
 			TVSpamProbs.clear();
@@ -492,7 +495,7 @@ public:
 				TVSpamProbs.push_back(val);
 			}
 			spam_probs_in.close();
-			cout << "TVSpamProbs loaded from TVSpamProbs.txt" << endl;
+			if (debug) cout << "TVSpamProbs loaded from TVSpamProbs.txt" << endl;
 		}
 		else
 		{
@@ -520,9 +523,9 @@ public:
 		}
 	}
 	
-	void loadSelectedFeatures()
+	void loadSelectedFeatures(string features_path)
 	{
-		ifstream selected_features_input("selected_features.txt");
+		ifstream selected_features_input(features_path);
 		if (selected_features_input.is_open())
 		{
 			selectedFeatures.clear();
@@ -533,7 +536,7 @@ public:
 				selectedFeatures.push_back(val);
 			}
 			selected_features_input.close();
-			cout << "Selected Features loaded from selected_features.txt" << endl;
+			if (debug) cout << "Selected Features loaded from selected_features.txt" << endl;
 		}
 		else
 		{

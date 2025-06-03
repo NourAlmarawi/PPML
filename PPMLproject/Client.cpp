@@ -24,9 +24,11 @@ public:
     BatchEncoder *batch_encoder = nullptr;
     GaloisKeys gal_keys;
     RelinKeys relin_keys;
+    bool debug = false;
 
-    Client()
+    Client(bool debugMode)
     {
+        debug = debugMode;
     }
 
     void initializeSEAL(int polyModulus)
@@ -47,9 +49,9 @@ public:
             parms.set_plain_modulus(65537);
         }
         context = SEALContext::Create(parms);
-        print_parameters(context);
+        if (debug) print_parameters(context);
         auto qualifiers = context->context_data()->qualifiers();
-        cout << "Batching enabled: " << boolalpha << qualifiers.using_batching << endl;
+        if (debug) cout << "Batching enabled: " << boolalpha << qualifiers.using_batching << endl;
         KeyGenerator keygen(context);
         public_key = keygen.public_key();
         secret_key = keygen.secret_key();
@@ -63,7 +65,7 @@ public:
         batch_encoder = new BatchEncoder(context);
         gal_keys = keygen.galois_keys(30);
         relin_keys = keygen.relin_keys(30);
-        cout << "SEAL initialized successfully" << endl;
+        if (debug) cout << "SEAL initialized successfully" << endl;
     }
 
     Ciphertext createQueryAccordingToSelectedFeauters(int polyModulus, const string &filename, vector<string> &selectedFeatures)
@@ -84,8 +86,8 @@ public:
         infile.close();
         query[0] = 1;
 
-        cout << "Query vector: ";
-        for (const auto &q : query) cout << "|"<< q << "|"; cout << endl;
+        if (debug) cout << "Query vector: ";
+        if (debug) for (const auto &q : query) cout << "|"<< q << "|";if (debug) cout << endl;
         
         // resize
         size_t slot_count = batch_encoder->slot_count();
@@ -99,15 +101,15 @@ public:
         // Encrypt
         Ciphertext encrypted_query;
         encryptor->encrypt(plain_query, encrypted_query);
-        cout << "Query encrypted successfully" << endl;
-        cout << "Encrypted query size: " << encrypted_query.size() << endl;
-        cout << "NB: " << decryptor->invariant_noise_budget(encrypted_query) << endl;
+        if (debug) cout << "Query encrypted successfully" << endl;
+        if (debug) cout << "Encrypted query size: " << encrypted_query.size() << endl;
+        if (debug) cout << "NB: " << decryptor->invariant_noise_budget(encrypted_query) << endl;
 
         return encrypted_query;
         
     };
 
-    void decryptResult(Ciphertext processedQuery){
+    bool decryptResult(Ciphertext processedQuery){
         Plaintext plain_result;
         decryptor->decrypt(processedQuery, plain_result);
 
@@ -115,15 +117,17 @@ public:
         batch_encoder->decode(plain_result, result);
 
         uint64_t val = result[0];
-        cout << "Decrypted value: " << val << endl;
+        if (debug) cout << "Decrypted value: " << val << endl;
         int modulus = context->context_data()->parms().plain_modulus().value();
         if (val > modulus / 2)
         {
-            cout << "Spam\n";
+            // cout << "Spam\n";
+            return false; // Spam
         }
         else
         {
-            cout << "Ham\n";
+            // cout << "Ham\n";
+            return true;
         }
     }
 
