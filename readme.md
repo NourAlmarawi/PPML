@@ -1,4 +1,3 @@
-Collecting workspace information```markdown
 # PPMLproject
 
 ## Overview
@@ -20,27 +19,16 @@ PPMLproject/
 │
 ├── Client.cpp
 ├── MultinomialNB_Email.cpp
-├── MultinomialNB_Email.h
 ├── MultinomialNB_Email_original.cpp
-├── MultinomialNB_Email_original.h
 ├── selected_features.txt
-├── test_data/
+├── enron5/
 │   ├── ham/
 │   └── spam/
-├── outputs/
-│   ├── FINALRUN.txt
-│   ├── plain run.txt
-│   └── ...
-├── build/
-├── Debug/
-├── seal/
-│   └── batchencoder.cpp
-├── .vscode/
-│   └── settings.json
-├── PPMLproject.vcxproj
-├── PPMLproject.vcxproj.filters
-├── PPMLproject.vcxproj.user
-└── readme.md
+└── outputs/
+    ├── FINALRUN.txt
+    ├── plain run.txt
+    └── ...
+
 ```
 
 ## Getting Started
@@ -76,7 +64,4 @@ PPMLproject/
 - [Microsoft SEAL](https://github.com/microsoft/SEAL)
 - Naive Bayes Classifier: [Wikipedia](https://en.wikipedia.org/wiki/Naive_Bayes_classifier)
 
-## License
-
-This project is for academic/research purposes. See LICENSE for details.
 ```

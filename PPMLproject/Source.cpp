@@ -39,7 +39,8 @@ int main_client()
 	cout << "MultinomialNB_Email loaded successfully." << endl;
 
 	cout << "creating query according to selected features..." << endl;
-	string filename = "test_data/testSpam.txt";
+	string filename = "test_data/ham/test.txt";
+	// string filename = "test_data/spam/test.txt";
 	
 	Ciphertext query = client.createQueryAccordingToSelectedFeauters(polyModulus, filename, selectedFeatures);
 	cout << "Query created successfully." << endl;

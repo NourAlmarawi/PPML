@@ -1,11 +1,7 @@
 dataset_reduced
-enron5
-MultinomialNB_Email_original.cpp
 .vscode/
 .vs
 debug
 release
 *.vcxproj*
 seal
-enron_data.csv
-enron5kSample.csv
